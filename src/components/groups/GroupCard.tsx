@@ -31,9 +31,17 @@ export function GroupCard({
       to={`/groups/${group.id}`}
       className="paper group flex items-center gap-4 px-4 py-4 transition-colors duration-micro hover:border-ink/20 hover:bg-surface/40"
     >
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface text-navy">
-        <GroupIcon icon={group.icon} emoji={group.emoji} size={19} />
-      </span>
+      {group.coverUrl ? (
+        <img
+          src={group.coverUrl}
+          alt=""
+          className="h-11 w-11 shrink-0 rounded-sm border border-line object-cover"
+        />
+      ) : (
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-sm bg-surface text-navy">
+          <GroupIcon icon={group.icon} emoji={group.emoji} size={19} />
+        </span>
+      )}
 
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[15px] font-medium">{group.name}</span>

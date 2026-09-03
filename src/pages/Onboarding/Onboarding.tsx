@@ -7,6 +7,7 @@ import { CURRENCY_LIST } from '@/lib/currency'
 import { Button } from '@/components/ui/Button'
 import { Field, Input } from '@/components/ui/Field'
 import { Avatar } from '@/components/ui/Avatar'
+import { AVATAR_IMAGE, compressImage } from '@/lib/images'
 import { useAppStore } from '@/store/appStore'
 import { cn } from '@/lib/cn'
 
@@ -24,14 +25,17 @@ export default function Onboarding() {
   const [error, setError] = useState<string>()
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const pickAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const pickAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
-    // Stored as a data URL: no backend to upload to, and it round-trips
-    // through localStorage with the rest of the state.
-    const reader = new FileReader()
-    reader.onload = () => setAvatarUrl(String(reader.result))
-    reader.readAsDataURL(file)
+    // Compressed first: a raw phone photo as a data URL would take most of the
+    // localStorage budget the whole app shares.
+    try {
+      setAvatarUrl(await compressImage(file, AVATAR_IMAGE))
+    } catch {
+      setError('That image could not be used. Try another one.')
+    }
   }
 
   const submit = async (event: React.FormEvent) => {

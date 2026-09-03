@@ -10,6 +10,7 @@ import { Field, Input } from '@/components/ui/Field'
 import { Avatar } from '@/components/ui/Avatar'
 import { GroupIcon } from '@/components/expenses/CategoryIcon'
 import { Sheet } from '@/components/ui/Sheet'
+import { CoverPicker } from '@/components/groups/CoverPicker'
 import { useToast } from '@/components/ui/toastContext'
 import { cn } from '@/lib/cn'
 
@@ -34,6 +35,7 @@ export default function CreateGroup() {
 
   const [name, setName] = useState('')
   const [icon, setIcon] = useState<GroupIconId>('travel')
+  const [coverUrl, setCoverUrl] = useState<string>()
   const [emoji, setEmoji] = useState(EMOJI_CHOICES[0])
   const [memberIds, setMemberIds] = useState<string[]>([])
   const [error, setError] = useState<string>()
@@ -55,6 +57,7 @@ export default function CreateGroup() {
       name,
       icon,
       emoji: icon === 'custom' ? emoji : undefined,
+      coverUrl,
       memberIds,
     })
     toast.confirm('Group created')
@@ -91,8 +94,10 @@ export default function CreateGroup() {
           )}
         </Field>
 
+        <CoverPicker value={coverUrl} onChange={setCoverUrl} />
+
         <fieldset>
-          <legend className="eyebrow mb-2">Icon</legend>
+          <legend className="eyebrow mb-2">{coverUrl ? 'Icon (used in lists)' : 'Icon'}</legend>
           <div className="grid grid-cols-6 gap-2">
             {ICON_OPTIONS.map((option) => (
               <button

@@ -111,6 +111,30 @@ The local adapter collapses every mutation into a debounced snapshot write to
 `localStorage`. Ids and timestamps are minted in the store, before persistence,
 which keeps both implementations optimistic and offline-tolerant.
 
+## Brand assets
+
+The wordmark lives at `public/brand/wordmark.png` and is built from the source
+artwork in `brand/` by `node scripts/build-wordmark.mjs`. It ships as a
+greyscale+alpha mask, not a picture: `<Wordmark />` paints it with
+`currentColor` and sizes it in `em`, so it inherits the surrounding text colour
+and scales like type instead of needing a pixel height per breakpoint. Replacing
+the logo means dropping new artwork in `brand/` and re-running the script.
+
+## Images
+
+Group header photos and profile pictures are stored as compressed JPEG data
+URLs inside the same localStorage entry as everything else, and that entry has
+a browser budget of roughly 5 MB in total.
+
+So nothing reaches the store as picked. `src/lib/images` redraws every upload at
+a bounded size and re-encodes it, stepping the quality down until it fits a hard
+ceiling — 400 KB for a cover, 60 KB for an avatar. A 6 MB phone photo lands at
+roughly 150 KB. Anything that still will not fit is rejected with a message,
+because an upload that silently does nothing is worse than one that says no.
+
+That leaves room for around 25 group covers. A real backend removes the ceiling;
+until then it is the honest limit.
+
 ## Typography
 
 The brief specifies **Coterie** for brand moments. It is a licensed commercial

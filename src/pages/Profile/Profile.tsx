@@ -15,6 +15,7 @@ import {
 import type { CurrencyCode } from '@/types'
 import { useAppStore } from '@/store/appStore'
 import { CURRENCY_LIST } from '@/lib/currency'
+import { AVATAR_IMAGE, compressImage } from '@/lib/images'
 import { PageHeader } from '@/components/navigation/PageHeader'
 import { Avatar } from '@/components/ui/Avatar'
 import { Button } from '@/components/ui/Button'
@@ -70,15 +71,16 @@ export default function Profile() {
     toast.confirm('Data exported')
   }
 
-  const pickAvatar = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const pickAvatar = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    event.target.value = ''
     if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      updateUser({ avatarUrl: String(reader.result) })
+    try {
+      updateUser({ avatarUrl: await compressImage(file, AVATAR_IMAGE) })
       toast.confirm('Photo updated')
+    } catch {
+      toast.notice('That image could not be used. Try another one.')
     }
-    reader.readAsDataURL(file)
   }
 
   return (

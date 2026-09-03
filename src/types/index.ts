@@ -67,6 +67,12 @@ export interface Group {
   icon: GroupIconId
   /** Optional emoji, only used when icon === 'custom'. */
   emoji?: string
+  /**
+   * Header photo, as a compressed JPEG data URL. Written only through
+   * lib/images, which caps the size — the whole store shares one localStorage
+   * budget, so an unprocessed upload would evict everything else.
+   */
+  coverUrl?: string
   currency: CurrencyCode
   members: GroupMember[]
   createdAt: string
