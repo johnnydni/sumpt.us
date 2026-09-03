@@ -1,0 +1,65 @@
+/*
+ * sumpt.us — design tokens
+ * ---------------------------------------------------------------------------
+ * TYPEFACE NOTE
+ *
+ * The brief specifies Coterie for brand moments. Coterie is a licensed
+ * commercial typeface and cannot be redistributed in this repository, so the
+ * build ships a licence-clean editorial fallback (Fraunces) that occupies the
+ * same role: high-contrast, editorial, used sparingly.
+ *
+ * To switch to the real Coterie once you hold a webfont licence:
+ *   1. drop the woff2 files into  public/fonts/coterie/
+ *   2. uncomment the @font-face blocks below
+ *   3. that's it — --font-display already lists Coterie first.
+ * No component references a font family directly; they all go through
+ * font-display / font-sans, so the swap is contained to this file.
+ */
+
+/*
+@font-face {
+  font-family: 'Coterie';
+  src: url('/fonts/coterie/Coterie-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Coterie';
+  src: url('/fonts/coterie/Coterie-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+*/
+
+:root {
+  --font-display: 'Coterie', 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-body: 'Raleway', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Surfaces */
+  --c-canvas: #ffffff;
+  --c-ink: #111111;
+  --c-muted: #777777;
+  --c-surface: #f6f6f4;
+  --c-line: #e8e8e5;
+
+  /* Accents */
+  --c-navy: #172a46;
+  --c-positive: #3f7d58;
+  --c-negative: #b94a48;
+  --c-neutral: #a48732;
+  --c-attention: #c86632;
+
+  /* Motion — kept in one place so timings stay consistent across CSS and JS */
+  --t-micro: 150ms;
+  --t-component: 250ms;
+  --t-page: 320ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Radii — moderate, paper-like, never pill-shaped for containers */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  color-scheme: light;
+}
