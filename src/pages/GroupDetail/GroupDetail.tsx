@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { BarChart3, MoreHorizontal, Plus, Trash2, UserPlus } from 'lucide-react'
+import { BarChart3, ImagePlus, MoreHorizontal, Plus, Trash2, UserPlus } from 'lucide-react'
 import type { Debt } from '@/types'
 import { useAppStore } from '@/store/appStore'
 import { usePeople } from '@/hooks/usePeople'
@@ -15,6 +15,7 @@ import { SettleSheet } from '@/components/settlements/SettleSheet'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog, Sheet } from '@/components/ui/Sheet'
 import { EmptyState, List, SectionHeader } from '@/components/ui/Primitives'
+import { CoverPicker } from '@/components/groups/CoverPicker'
 import { useToast } from '@/components/ui/toastContext'
 import { pluralize } from '@/lib/formatting'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -36,6 +37,7 @@ export default function GroupDetail() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [addPeopleOpen, setAddPeopleOpen] = useState(false)
+  const [coverOpen, setCoverOpen] = useState(false)
   const [settling, setSettling] = useState<Debt | null>(null)
 
   const settled = ledger.balances.every((b) => b.netMinor === 0)
@@ -78,7 +80,16 @@ export default function GroupDetail() {
         }
       />
 
-      <section className="paper px-5 py-7 sm:px-8">
+      <section className="paper overflow-hidden">
+        {group.coverUrl && (
+          <img
+            src={group.coverUrl}
+            alt=""
+            className="h-40 w-full border-b border-line object-cover sm:h-52"
+          />
+        )}
+
+        <div className="px-5 py-7 sm:px-8">
         <p className="eyebrow">Total expenses</p>
         <AnimatedMoney
           minor={ledger.totalMinor}
@@ -103,6 +114,7 @@ export default function GroupDetail() {
               Statistics
             </Link>
           </Button>
+        </div>
         </div>
       </section>
 
@@ -219,6 +231,16 @@ export default function GroupDetail() {
           <button
             onClick={() => {
               setMenuOpen(false)
+              setCoverOpen(true)
+            }}
+            className="flex w-full items-center gap-3 py-4 text-left text-[15px] transition-colors hover:bg-surface/60"
+          >
+            <ImagePlus size={17} strokeWidth={1.75} className="text-muted" />
+            {group.coverUrl ? 'Change header image' : 'Add header image'}
+          </button>
+          <button
+            onClick={() => {
+              setMenuOpen(false)
               setAddPeopleOpen(true)
             }}
             className="flex w-full items-center gap-3 py-4 text-left text-[15px] transition-colors hover:bg-surface/60"
@@ -244,6 +266,28 @@ export default function GroupDetail() {
             <Trash2 size={17} strokeWidth={1.75} />
             Delete group
           </button>
+        </div>
+      </Sheet>
+
+      <Sheet
+        open={coverOpen}
+        onOpenChange={setCoverOpen}
+        title="Header image"
+        description={`Shown at the top of ${group.name}.`}
+        footer={
+          <Button full size="lg" onClick={() => setCoverOpen(false)}>
+            Done
+          </Button>
+        }
+      >
+        <div className="pb-2">
+          <CoverPicker
+            value={group.coverUrl}
+            onChange={(coverUrl) => {
+              updateGroup(group.id, { coverUrl })
+              toast.confirm(coverUrl ? 'Header image updated' : 'Header image removed')
+            }}
+          />
         </div>
       </Sheet>
 

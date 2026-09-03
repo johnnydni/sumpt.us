@@ -1,6 +1,7 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { BottomNav } from './BottomNav'
+import { Wordmark } from '@/components/brand/Wordmark'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
 /**
@@ -14,7 +15,19 @@ export function AppShell() {
 
   return (
     <div className="min-h-[100dvh] bg-canvas">
-      <main className="shell pt-8 sm:pt-14">
+      {/* Brand bar. Sits outside the animated outlet so it stays put between
+          screens instead of sliding in with every page. */}
+      <div className="shell pt-6 sm:pt-8">
+        <Link
+          to="/overview"
+          aria-label="sumpt.us — go to overview"
+          className="inline-flex rounded-sm text-ink transition-opacity duration-micro hover:opacity-60"
+        >
+          <Wordmark className="text-[17px]" />
+        </Link>
+      </div>
+
+      <main className="shell pt-7 sm:pt-10">
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={location.pathname}

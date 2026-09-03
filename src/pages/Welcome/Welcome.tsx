@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { Apple } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { Wordmark } from '@/components/brand/Wordmark'
 import { useAppStore } from '@/store/appStore'
 import { useToast } from '@/components/ui/toastContext'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
@@ -36,8 +37,8 @@ export default function Welcome() {
     <div className="flex min-h-[100dvh] flex-col px-6 pb-safe sm:px-8">
       <div className="mx-auto flex w-full max-w-[420px] flex-1 flex-col">
         <div className="flex flex-1 flex-col justify-center py-16">
-          <motion.h1 {...stagger(0)} className="display text-[clamp(2.75rem,14vw,3.5rem)] leading-[0.95]">
-            sumpt.us
+          <motion.h1 {...stagger(0)}>
+            <Wordmark className="text-[clamp(2.5rem,13vw,3.25rem)] text-ink" />
           </motion.h1>
 
           <motion.p {...stagger(1)} className="mt-5 text-xl tracking-tight">
