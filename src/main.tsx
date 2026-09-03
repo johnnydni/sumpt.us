@@ -5,11 +5,22 @@ import App from './App'
 import './styles/index.css'
 
 /**
- * GitHub Pages serves the app from a repository sub-path, so the router needs
- * the same base Vite was built with. import.meta.env.BASE_URL carries it and
- * is "/" in dev, which keeps local URLs clean.
+ * The sub-path the router should treat as its root.
+ *
+ * Normally this is whatever Vite was built with — "/sumpt.us" on GitHub Pages,
+ * "" in dev. But a build can end up served from somewhere else (a custom
+ * domain, a renamed repo), and then a hardcoded basename makes every route
+ * fail to match. So trust the address bar: only use the built prefix if the
+ * page is actually under it.
  */
-const basename = import.meta.env.BASE_URL.replace(/\/$/, '')
+function resolveBasename(): string {
+  const built = import.meta.env.BASE_URL.replace(/\/$/, '')
+  if (!built) return ''
+  const here = window.location.pathname
+  return here === built || here.startsWith(`${built}/`) ? built : ''
+}
+
+const basename = resolveBasename()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

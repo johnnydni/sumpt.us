@@ -5,12 +5,21 @@ import path from 'node:path'
 import fs from 'node:fs'
 
 /**
- * GitHub Pages serves this project from https://<user>.github.io/sumpt.us/,
- * so the production base has to carry the repository sub-path. The deploy
- * workflow overrides it via BASE_PATH when the repo is renamed or moved to a
- * custom domain (where BASE_PATH should be "/").
+ * Where the app will be served from.
+ *
+ * GitHub Pages puts a project site under https://<user>.github.io/<repo>/, so
+ * the production build has to carry that sub-path in every asset URL. The dev
+ * server has no such prefix and must stay at "/" — otherwise `npm run dev`
+ * answers 404 for every URL that isn't /<repo>/..., which looks exactly like a
+ * missing index.html.
+ *
+ * The deploy workflow sets BASE_PATH explicitly; set it to "/" for a custom
+ * domain, where the site is served from the root.
  */
-const base = process.env.BASE_PATH ?? '/sumpt.us/'
+function resolveBase(command: 'serve' | 'build'): string {
+  if (process.env.BASE_PATH) return process.env.BASE_PATH
+  return command === 'serve' ? '/' : '/sumpt.us/'
+}
 
 /**
  * GitHub Pages has no SPA rewrite. Shipping a byte-identical 404.html means a
@@ -30,7 +39,10 @@ function spaFallback() {
   }
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => {
+  const base = resolveBase(command)
+
+  return {
   base,
   plugins: [
     react(),
@@ -95,4 +107,5 @@ export default defineConfig({
       },
     },
   },
+  }
 })

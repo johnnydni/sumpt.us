@@ -3,6 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { AppShell } from '@/components/navigation/AppShell'
 import { ToastProvider } from '@/components/ui/Toast'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import Welcome from '@/pages/Welcome/Welcome'
 import Onboarding from '@/pages/Onboarding/Onboarding'
 import Overview from '@/pages/Overview/Overview'
@@ -39,33 +40,35 @@ export default function App() {
   return (
     <ToastProvider>
       <ScrollToTop />
-      <Suspense fallback={<RouteFallback />}>
-        <Routes>
-          <Route path="/" element={<Entry />} />
-          <Route path="/onboarding" element={<Onboarding />} />
+      <ErrorBoundary>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Entry />} />
+            <Route path="/onboarding" element={<Onboarding />} />
 
-          <Route element={<RequireOnboarding />}>
-            <Route element={<AppShell />}>
-              <Route path="/overview" element={<Overview />} />
-              <Route path="/groups" element={<Groups />} />
-              <Route path="/groups/new" element={<CreateGroup />} />
-              <Route path="/groups/:id" element={<GroupDetail />} />
-              <Route path="/groups/:id/stats" element={<Statistics />} />
-              <Route path="/expenses/new" element={<AddExpense />} />
-              <Route path="/expenses/:id" element={<ExpenseDetail />} />
-              <Route path="/expenses/:id/edit" element={<AddExpense />} />
-              <Route path="/settle" element={<Settlement />} />
-              <Route path="/settle/smart" element={<SmartSettlement />} />
-              <Route path="/activity" element={<Activity />} />
-              <Route path="/friends" element={<Friends />} />
-              <Route path="/friends/:id" element={<FriendDetail />} />
-              <Route path="/profile" element={<Profile />} />
+            <Route element={<RequireOnboarding />}>
+              <Route element={<AppShell />}>
+                <Route path="/overview" element={<Overview />} />
+                <Route path="/groups" element={<Groups />} />
+                <Route path="/groups/new" element={<CreateGroup />} />
+                <Route path="/groups/:id" element={<GroupDetail />} />
+                <Route path="/groups/:id/stats" element={<Statistics />} />
+                <Route path="/expenses/new" element={<AddExpense />} />
+                <Route path="/expenses/:id" element={<ExpenseDetail />} />
+                <Route path="/expenses/:id/edit" element={<AddExpense />} />
+                <Route path="/settle" element={<Settlement />} />
+                <Route path="/settle/smart" element={<SmartSettlement />} />
+                <Route path="/activity" element={<Activity />} />
+                <Route path="/friends" element={<Friends />} />
+                <Route path="/friends/:id" element={<FriendDetail />} />
+                <Route path="/profile" element={<Profile />} />
+              </Route>
             </Route>
-          </Route>
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Suspense>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </ToastProvider>
   )
 }
