@@ -19,6 +19,11 @@ npm run lint
 npm run build      # type-checks, then builds to dist/
 ```
 
+The dev server runs at the root (`http://localhost:5173/`). Only production
+builds carry the `/sumpt.us/` sub-path that GitHub Pages needs — a dev server
+under that prefix answers 404 for every plain URL, which looks exactly like a
+missing `index.html`.
+
 `npm run build` also writes `dist/404.html` as a copy of `index.html`, which is
 how deep links survive GitHub Pages (it has no SPA rewrite, so it serves the
 404 document and the router takes over from there).
@@ -30,7 +35,14 @@ push to `main`. Enable Pages with **Source: GitHub Actions** once, and the site
 appears at `https://<user>.github.io/<repo>/`.
 
 The workflow passes `BASE_PATH=/<repo>/` so Vite emits the right asset URLs. On
-a custom domain, set `BASE_PATH=/`.
+a custom domain the site is served from the root, so set `BASE_PATH=/` — the
+built asset URLs are absolute and will 404 otherwise. The router is more
+forgiving: it reads the address bar and falls back to no prefix if the page
+isn't under the path it was built for.
+
+To check a production build the way Pages actually serves it, use a static
+server without an SPA rewrite. `npm run preview` falls back to `index.html` for
+unknown paths, which hides exactly the bugs this setup is meant to catch.
 
 ## How the money works
 
