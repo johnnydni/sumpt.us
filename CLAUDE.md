@@ -1,0 +1,77 @@
+# Working on sumpt.us
+
+## Shipping
+
+Merging to `main` is pre-authorised — no need to ask. `main` deploys straight to
+GitHub Pages, so a merge is a production release.
+
+Merge only when all four are true. If any one of them fails, stop and say so
+rather than merging:
+
+```bash
+npm run lint
+npm test -- --run          # 40 tests, all green
+npm run build              # type-checks first
+cmp dist/index.html dist/404.html   # the Pages SPA fallback
+```
+
+Work on `claude/sumptus-expense-app-53l0gn`, push there, then fast-forward
+`main` onto it. Rebase rather than merge-commit when `main` has moved on, and
+check that nothing would be lost first:
+
+```bash
+git log --oneline HEAD..origin/main   # must be empty
+```
+
+No pull request unless asked for one.
+
+## Money
+
+Three rules the test suite exists to protect. Breaking one silently produces
+wrong balances, which is the one failure this app cannot afford.
+
+1. **Integers only.** Every amount is an integer in the currency's minor unit.
+   No floats, and never parse a formatted string back into a calculation.
+2. **Splits reconcile exactly.** `allocate()` uses largest-remainder allocation
+   with ties broken by index, so the parts always sum to the total and the same
+   inputs give the same cents on every device.
+3. **One debt graph.** Balances are net positions per group; suggested payments
+   come from `settleBalances()`. A pairwise ledger cannot absorb a simplified
+   payment — that bug shipped once and the tests now pin it down.
+
+Prices belong to this too: `src/data/plans.ts` holds them in minor units and
+they render through `formatMoney`.
+
+Components never do arithmetic on money. They read derived values from
+`useLedger`; the maths lives in `src/lib/calculations`.
+
+## Checking UI changes
+
+Look at the screen before claiming it works. Playwright is deliberately not a
+dependency — drive the pre-installed Chromium over CDP instead
+(`/opt/pw-browsers/chromium-1194/chrome-linux/chrome`, `--no-proxy-server`,
+`--remote-debugging-port`). Seed an onboarded state with
+`Page.addScriptToEvaluateOnNewDocument` writing `sumptus.state.v1`, since most
+routes sit behind the onboarding guard.
+
+Two traps that make a sound layout look broken:
+
+- `Page.getLayoutMetrics().cssContentSize` drops the trailing margin the bottom
+  nav needs. Use `document.documentElement.scrollHeight`.
+- Set the viewport *before* scrolling. Resizing afterwards resets the position.
+
+`npm run preview` does its own SPA fallback, so it hides exactly the Pages
+routing bugs worth catching. Serve `dist/` under a `/sumpt.us/` path with a
+plain static server instead.
+
+## Plans
+
+The pricing model is copy, not behaviour: nothing enforces the Free tier's
+group tickets or the trip length, because there is no billing to lift a limit
+once hit and a cap in local storage is one a user can edit. Both belong with
+entitlements. `CURRENT_PLAN_ID` is a constant for the same reason.
+
+The tier boundary is drawn on cost, not on feature value: anything with no
+per-use cost can live in a one-time plan, anything with a recurring third-party
+bill has to sit behind a subscription. Check new features against that before
+adding them to `ONE_TIME_PLANS`.
