@@ -181,6 +181,11 @@ function PlanCard({ plan, current = false }: { plan: PlanTier; current?: boolean
             </li>
           ))}
         </ul>
+        {/* A pointer elsewhere, so it sits outside the list rather than posing
+            as one more thing you get. */}
+        {plan.footnote && (
+          <p className="mt-3 text-[13px] leading-relaxed text-muted">{plan.footnote}</p>
+        )}
       </div>
     </article>
   )

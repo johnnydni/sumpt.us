@@ -24,6 +24,8 @@ export interface Plan {
   features: string[]
   /** A factual note, not a sales badge. */
   badge?: string
+  /** A closing line under the list — a pointer, not a feature. */
+  footnote?: string
 }
 
 /**
@@ -83,8 +85,9 @@ export const ONE_TIME_PLANS: Plan[] = [
       'Scan receipts on your device and split them by line item',
       'Payment QR code and your payment links in one place',
       'Reminders on your schedule, in your own words',
-      'Every future feature that costs nothing to run',
+      'Future social and security updates',
     ],
+    footnote: 'For the newest features, consider the Pro plan.',
   },
   {
     id: 'lifetime-wg',

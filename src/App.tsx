@@ -1,7 +1,9 @@
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { AnimatePresence } from 'motion/react'
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { AppShell } from '@/components/navigation/AppShell'
+import { Splash } from '@/components/brand/Splash'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import Welcome from '@/pages/Welcome/Welcome'
@@ -29,48 +31,57 @@ const Plan = lazy(() => import('@/pages/Plan/Plan'))
 export default function App() {
   const hydrate = useAppStore((s) => s.hydrate)
   const hydrated = useAppStore((s) => s.hydrated)
+  const [splashPlayed, setSplashPlayed] = useState(false)
+  const endSplash = useCallback(() => setSplashPlayed(true), [])
 
   useEffect(() => {
     void hydrate()
   }, [hydrate])
 
-  // Blank rather than a spinner: localStorage reads finish inside a frame, and
-  // a flashed loader would be the only slow-feeling thing in the app.
-  if (!hydrated) return <div className="min-h-[100dvh] bg-canvas" />
+  // The splash covers the boot rather than replacing it: routes mount behind
+  // it, so the first screen is already painted when it lifts. It also outstays
+  // its own timer if hydration is somehow slower — never the other way round.
+  const showSplash = !hydrated || !splashPlayed
 
   return (
     <ToastProvider>
-      <ScrollToTop />
-      <ErrorBoundary>
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Entry />} />
-            <Route path="/onboarding" element={<Onboarding />} />
+      <AnimatePresence>{showSplash && <Splash key="splash" onDone={endSplash} />}</AnimatePresence>
 
-            <Route element={<RequireOnboarding />}>
-              <Route element={<AppShell />}>
-                <Route path="/overview" element={<Overview />} />
-                <Route path="/groups" element={<Groups />} />
-                <Route path="/groups/new" element={<CreateGroup />} />
-                <Route path="/groups/:id" element={<GroupDetail />} />
-                <Route path="/groups/:id/stats" element={<Statistics />} />
-                <Route path="/expenses/new" element={<AddExpense />} />
-                <Route path="/expenses/:id" element={<ExpenseDetail />} />
-                <Route path="/expenses/:id/edit" element={<AddExpense />} />
-                <Route path="/settle" element={<Settlement />} />
-                <Route path="/settle/smart" element={<SmartSettlement />} />
-                <Route path="/activity" element={<Activity />} />
-                <Route path="/friends" element={<Friends />} />
-                <Route path="/friends/:id" element={<FriendDetail />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/plan" element={<Plan />} />
-              </Route>
-            </Route>
+      {hydrated && (
+        <>
+          <ScrollToTop />
+          <ErrorBoundary>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                <Route path="/" element={<Entry />} />
+                <Route path="/onboarding" element={<Onboarding />} />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </ErrorBoundary>
+                <Route element={<RequireOnboarding />}>
+                  <Route element={<AppShell />}>
+                    <Route path="/overview" element={<Overview />} />
+                    <Route path="/groups" element={<Groups />} />
+                    <Route path="/groups/new" element={<CreateGroup />} />
+                    <Route path="/groups/:id" element={<GroupDetail />} />
+                    <Route path="/groups/:id/stats" element={<Statistics />} />
+                    <Route path="/expenses/new" element={<AddExpense />} />
+                    <Route path="/expenses/:id" element={<ExpenseDetail />} />
+                    <Route path="/expenses/:id/edit" element={<AddExpense />} />
+                    <Route path="/settle" element={<Settlement />} />
+                    <Route path="/settle/smart" element={<SmartSettlement />} />
+                    <Route path="/activity" element={<Activity />} />
+                    <Route path="/friends" element={<Friends />} />
+                    <Route path="/friends/:id" element={<FriendDetail />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/plan" element={<Plan />} />
+                  </Route>
+                </Route>
+
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
+          </ErrorBoundary>
+        </>
+      )}
     </ToastProvider>
   )
 }

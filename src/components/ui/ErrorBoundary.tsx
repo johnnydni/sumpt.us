@@ -40,11 +40,11 @@ export class ErrorBoundary extends Component<Props, State> {
       <div className="flex min-h-[100dvh] items-center justify-center px-6">
         <div className="w-full max-w-[34ch] text-center">
           <p className="display text-2xl">
-            {isChunkFailure ? 'Your app is running an older version.' : 'Something broke.'}
+            {isChunkFailure ? 'A newer version is ready.' : 'Something broke.'}
           </p>
           <p className="mt-3 text-sm leading-relaxed text-muted">
             {isChunkFailure
-              ? 'For the newest stuff, tap reload.'
+              ? 'Your app is a bit outdated. For the newest cool stuff, tap reload.'
               : 'Your expenses are safe on this device. Reloading usually clears it.'}
           </p>
           <button
