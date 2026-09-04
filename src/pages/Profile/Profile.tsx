@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import {
   ChevronRight,
+  CreditCard,
   Download,
   Fingerprint,
   Globe,
@@ -145,6 +146,12 @@ export default function Profile() {
         <SectionHeader title="Account" />
         <div className="divide-y divide-line border-t border-line">
           <SettingRow
+            icon={<CreditCard size={17} strokeWidth={1.6} />}
+            label="Plan"
+            value="Free"
+            to="/plan"
+          />
+          <SettingRow
             icon={<UserCog size={17} strokeWidth={1.6} />}
             label="Personal information"
             onClick={() => {
@@ -287,26 +294,46 @@ function Stat({ label, value, to }: { label: string; value: number; to: string }
   )
 }
 
+/**
+ * Rows that open a sheet stay buttons; rows that go somewhere become links, so
+ * they can be opened in a new tab and announce themselves as navigation.
+ */
 function SettingRow({
   icon,
   label,
   value,
   onClick,
+  to,
 }: {
   icon: React.ReactNode
   label: string
   value?: string
-  onClick: () => void
+  onClick?: () => void
+  to?: string
 }) {
-  return (
-    <button
-      onClick={onClick}
-      className="flex w-full items-center gap-3 py-4 text-left transition-colors duration-micro hover:bg-surface/60"
-    >
+  const classes =
+    'flex w-full items-center gap-3 py-4 text-left transition-colors duration-micro hover:bg-surface/60'
+
+  const content = (
+    <>
       <span className="shrink-0 text-muted">{icon}</span>
       <span className="min-w-0 flex-1 truncate text-[15px]">{label}</span>
       {value && <span className="shrink-0 text-[13px] text-muted">{value}</span>}
       <ChevronRight size={16} strokeWidth={1.75} className="shrink-0 text-muted/60" />
+    </>
+  )
+
+  if (to) {
+    return (
+      <Link to={to} className={classes}>
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <button onClick={onClick} className={classes}>
+      {content}
     </button>
   )
 }

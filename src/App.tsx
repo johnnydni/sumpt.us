@@ -24,6 +24,7 @@ const Statistics = lazy(() => import('@/pages/Statistics/Statistics'))
 const Friends = lazy(() => import('@/pages/Friends/Friends'))
 const FriendDetail = lazy(() => import('@/pages/Friends/FriendDetail'))
 const Profile = lazy(() => import('@/pages/Profile/Profile'))
+const Plan = lazy(() => import('@/pages/Plan/Plan'))
 
 export default function App() {
   const hydrate = useAppStore((s) => s.hydrate)
@@ -62,6 +63,7 @@ export default function App() {
                 <Route path="/friends" element={<Friends />} />
                 <Route path="/friends/:id" element={<FriendDetail />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/plan" element={<Plan />} />
               </Route>
             </Route>
 
