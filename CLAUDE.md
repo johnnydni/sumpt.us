@@ -23,6 +23,17 @@ check that nothing would be lost first:
 git log --oneline HEAD..origin/main   # must be empty
 ```
 
+Confirm a push landed by comparing refs, not by the command looking fine. A
+pipe hands back the exit code of its *last* stage, so `git push … | tail -1`
+reports success no matter how the push went — which once left the feature
+branch six commits behind `main` without a word:
+
+```bash
+git push origin <branch>; echo "exit=$?"
+git fetch origin
+git rev-parse --short <branch> refs/remotes/origin/<branch>   # must match
+```
+
 No pull request unless asked for one.
 
 ## Money
