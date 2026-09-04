@@ -149,6 +149,43 @@ for (let y = 0; y < height; y += 1) {
   }
 }
 
+/**
+ * Stop at the lettering.
+ *
+ * The source artwork is a lockup: "sumpt.us" followed by a gap and then the
+ * mark. The mark is its own asset now (brand/mark-source.png), and the app
+ * composes the two, so baking it in here would put it on screen twice at a
+ * size nobody could adjust. The widest run of blank columns in the right-hand
+ * third is that gap; everything past it is the mark.
+ */
+const blank = []
+for (let x = left; x <= right; x += 1) {
+  let inked = false
+  for (let y = top; y <= bottom && !inked; y += 1) if (ink[y * width + x] > 8) inked = true
+  blank.push(inked ? 0 : 1)
+}
+let gapStart = -1
+let runStart = -1
+let widest = 0
+for (let i = 0; i <= blank.length; i += 1) {
+  if (blank[i] && runStart < 0) runStart = i
+  if ((!blank[i] || i === blank.length) && runStart >= 0) {
+    const run = i - runStart
+    // Only a gap in the right-hand third, wider than a word space, separates
+    // the mark from the lettering — inter-letter gaps are far narrower.
+    if (run > widest && runStart / blank.length > 0.6 && run > outHeightGuess(bottom, top) * 0.15) {
+      widest = run
+      gapStart = runStart
+    }
+    runStart = -1
+  }
+}
+if (gapStart > 0) right = left + gapStart - 1
+
+function outHeightGuess(b, t) {
+  return b - t + 1
+}
+
 const outWidth = right - left + 1
 const outHeight = bottom - top + 1
 const out = Buffer.alloc(outWidth * outHeight * 2)

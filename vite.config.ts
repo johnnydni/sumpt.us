@@ -48,7 +48,7 @@ export default defineConfig(({ command }) => {
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['icons/favicon.png'],
       manifest: {
         name: 'sumpt.us',
         short_name: 'sumpt.us',

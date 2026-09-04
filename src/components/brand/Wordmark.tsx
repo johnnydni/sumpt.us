@@ -1,21 +1,39 @@
+import { Mark, MARK_ASPECT } from '@/components/brand/Mark'
 import { cn } from '@/lib/cn'
 
 /** Intrinsic aspect of public/brand/wordmark.png, from scripts/build-wordmark.mjs. */
-const ASPECT = 828 / 151
+const TEXT_ASPECT = 668 / 151
+
+/**
+ * Space between the lettering and the mark, in em. The original artwork set it
+ * at 48px against a 151px lockup height; a slightly smaller mark wants
+ * slightly less air.
+ */
+const GAP = 0.28
+
+/**
+ * Mark height relative to the lettering.
+ *
+ * At a full 1em the mark overshoots the ascenders and outweighs a face this
+ * delicate — it is a solid shape against fine serifs. At 0.78 it caps out level
+ * with the `t`, which is the usual way to set a mark beside lowercase type.
+ */
+const MARK_HEIGHT = 0.78
 
 interface WordmarkProps {
   className?: string
 }
 
 /**
- * The sumpt.us wordmark.
+ * The sumpt.us lockup: the lettering, then the mark.
  *
- * Two deliberate choices. It is drawn as a CSS mask rather than an <img>, so
- * the ink is painted with `currentColor` and inherits whatever text colour it
- * sits in — no re-export for a new background. And it is sized in `em`, so it
- * scales like type: callers set a font size (a `clamp()` included) and the
- * artwork follows, instead of passing pixel heights that break at other
- * breakpoints.
+ * The two are separate assets composed here rather than one baked bitmap, so
+ * the mark can also stand alone — as an icon, an avatar, a favicon — and its
+ * size and spacing beside the lettering stay adjustable instead of being fixed
+ * at whatever the artwork happened to be.
+ *
+ * Both parts are masks painted with `currentColor` and sized in `em`, so the
+ * lockup inherits its colour and scales like type.
  */
 export function Wordmark({ className }: WordmarkProps) {
   const url = `${import.meta.env.BASE_URL}brand/wordmark.png`
@@ -24,19 +42,33 @@ export function Wordmark({ className }: WordmarkProps) {
     <span
       role="img"
       aria-label="sumpt.us"
-      className={cn('inline-block shrink-0 bg-current align-middle', className)}
-      style={{
-        height: '1em',
-        width: `${ASPECT}em`,
-        maskImage: `url("${url}")`,
-        WebkitMaskImage: `url("${url}")`,
-        maskSize: 'contain',
-        WebkitMaskSize: 'contain',
-        maskRepeat: 'no-repeat',
-        WebkitMaskRepeat: 'no-repeat',
-        maskPosition: 'left center',
-        WebkitMaskPosition: 'left center',
-      }}
-    />
+      className={cn('inline-flex shrink-0 items-center align-middle', className)}
+      style={{ gap: `${GAP}em` }}
+    >
+      <span
+        aria-hidden="true"
+        className="inline-block shrink-0 bg-current"
+        style={{
+          height: '1em',
+          width: `${TEXT_ASPECT}em`,
+          maskImage: `url("${url}")`,
+          WebkitMaskImage: `url("${url}")`,
+          maskSize: 'contain',
+          WebkitMaskSize: 'contain',
+          maskRepeat: 'no-repeat',
+          WebkitMaskRepeat: 'no-repeat',
+          maskPosition: 'left center',
+          WebkitMaskPosition: 'left center',
+        }}
+      />
+      {/* Scaled by font size rather than by overriding its box, so the mark
+          keeps its own "one em tall" contract wherever else it is used. */}
+      <span className="inline-flex" style={{ fontSize: `${MARK_HEIGHT}em` }}>
+        <Mark />
+      </span>
+    </span>
   )
 }
+
+/** Total width of the lockup at 1em, for callers that need to reserve space. */
+export const WORDMARK_ASPECT = TEXT_ASPECT + GAP + MARK_ASPECT * MARK_HEIGHT
