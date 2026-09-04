@@ -27,23 +27,45 @@ export interface Plan {
 }
 
 /**
- * Free is the whole product, not a trial. Splitting expenses is the reason the
- * app exists; charging for it would be charging for the core.
+ * Free is metered by open groups rather than by usage.
+ *
+ * A ticket is spent when a group is created and comes back when that group is
+ * settled, so the limit never punishes logging expenses — only leaving them
+ * unresolved, which is the one habit the app exists to fix.
  */
 export const FREE_PLAN: Plan = {
   id: 'free',
   name: 'Free',
   priceMinor: 0,
   period: 'once',
-  positioning: 'Everything you need to split expenses. No limits, no expiry.',
+  positioning: 'Two groups running at a time, and the full splitting engine behind them.',
   features: [
-    'Unlimited groups, expenses and friends',
+    'Two group tickets — a new group spends one',
+    'Settle a group and its ticket comes back',
+    'Unlimited expenses, friends and history',
     'Every split method — equal, exact, percentage, shares',
     'Smart Settlement: the fewest payments that clear the group',
-    'Statistics and full activity history',
-    'Export all your data whenever you want',
+    'Statistics and full data export',
+    'Trips run for a set length, up to six months',
   ],
 }
+
+/**
+ * The case for a permanent price, in the product's own voice.
+ *
+ * The first line stands on its own above the fold; the rest is the reasoning,
+ * which most people will never open and nobody should have to scroll past.
+ */
+export const PAY_ONCE_SUMMARY =
+  'These plans carry features that allow you to use sumpt.us forever in its core: managing and settling shared expenses.'
+
+export const PAY_ONCE_REASONING = [
+  'The reason why we designed these plans in this way, is simple.',
+  'We want to allow users that need just that, be able to purchase sumpt.us once and use it as they please.',
+  "Of course you'll still receive the newest social and security features as well.",
+  'This makes the permanent plan honest in our opinion.',
+  'If you want to support us in the continuous development of cool, new and useful features, consider the Pro plan.',
+]
 
 /**
  * One-time plans carry only features that cost nothing to run, which is what

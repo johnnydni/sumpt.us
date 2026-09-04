@@ -1,8 +1,11 @@
-import { Check } from 'lucide-react'
+import { useState } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
 import {
   CURRENT_PLAN_ID,
   FREE_PLAN,
   ONE_TIME_PLANS,
+  PAY_ONCE_REASONING,
+  PAY_ONCE_SUMMARY,
   PLAN_CURRENCY,
   SUBSCRIPTION_PLANS,
   TRIP_PLAN,
@@ -11,6 +14,7 @@ import {
 } from '@/data/plans'
 import { PageHeader } from '@/components/navigation/PageHeader'
 import { Badge, SectionHeader } from '@/components/ui/Primitives'
+import { useReducedMotion } from '@/hooks/useReducedMotion'
 import { formatMoney } from '@/lib/formatting'
 import { cn } from '@/lib/cn'
 
@@ -42,10 +46,7 @@ export default function Plan() {
 
       <section className="mt-10">
         <SectionHeader title="Pay once" />
-        <p className="-mt-1 mb-4 max-w-prose text-[13px] leading-relaxed text-muted">
-          These carry only features that cost nothing to run, which is what makes a permanent price
-          honest — no bill quietly accrues behind them.
-        </p>
+        <Disclosure summary={PAY_ONCE_SUMMARY} paragraphs={PAY_ONCE_REASONING} />
         <div className="space-y-3">
           {ONE_TIME_PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
@@ -71,6 +72,49 @@ export default function Plan() {
           A Trip Pass is bought inside the group it covers, not here.
         </p>
       </section>
+    </div>
+  )
+}
+
+/**
+ * A summary line that stays put, with the reasoning folded away behind it.
+ *
+ * The argument for a permanent price is worth making, but it is not worth
+ * making everyone scroll past it on the way to the prices.
+ */
+function Disclosure({ summary, paragraphs }: { summary: string; paragraphs: string[] }) {
+  const [open, setOpen] = useState(false)
+  const reduced = useReducedMotion()
+
+  return (
+    <div className="-mt-1 mb-4 max-w-prose">
+      <p className="text-[13px] leading-relaxed text-muted">{summary}</p>
+      <button
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        className="mt-1.5 inline-flex items-center gap-1 rounded-sm text-[13px] text-navy transition-colors duration-micro hover:text-ink"
+      >
+        {open ? 'Show less' : 'Why we price it this way'}
+        <ChevronDown
+          size={14}
+          strokeWidth={1.9}
+          aria-hidden="true"
+          className={cn(
+            'shrink-0',
+            !reduced && 'transition-transform duration-micro',
+            open && 'rotate-180',
+          )}
+        />
+      </button>
+      {open && (
+        <div className="mt-3 space-y-2.5 border-l border-line pl-4">
+          {paragraphs.map((paragraph) => (
+            <p key={paragraph} className="text-[13px] leading-relaxed text-muted">
+              {paragraph}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
