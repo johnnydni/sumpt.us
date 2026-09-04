@@ -139,7 +139,7 @@ function PlanCard({ plan, current = false }: { plan: PlanTier; current?: boolean
   return (
     <article className={cn('paper px-5 py-5 sm:px-6', current && 'border-navy/30 bg-navy/[0.02]')}>
       <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="display text-[19px] leading-tight">{plan.name}</h3>
+        <h3 className="display text-[38px] leading-[1.05]">{plan.name}</h3>
         {/* The free tier's name is already its price — repeating it reads like a bug. */}
         {free ? (
           current && <Badge tone="navy">Your plan</Badge>
