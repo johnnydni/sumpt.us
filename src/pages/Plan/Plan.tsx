@@ -138,14 +138,17 @@ function PlanCard({ plan, current = false }: { plan: PlanTier; current?: boolean
 
   return (
     <article className={cn('paper px-5 py-5 sm:px-6', current && 'border-navy/30 bg-navy/[0.02]')}>
-      <header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h3 className="display text-[23.75px] leading-tight">{plan.name}</h3>
+      {/* The price always sits on its own line under the name. Set beside it, a
+          long name pushed it below on some cards but not others, so it moved
+          between cards and again between screen widths. */}
+      <header>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+          <h3 className="display text-[23.75px] leading-tight">{plan.name}</h3>
+          {current && <Badge tone="navy">Your plan</Badge>}
+        </div>
         {/* The free tier's name is already its price — repeating it reads like a bug. */}
-        {free ? (
-          current && <Badge tone="navy">Your plan</Badge>
-        ) : (
-          <p className="flex items-baseline gap-1.5">
-            {current && <Badge tone="navy">Your plan</Badge>}
+        {!free && (
+          <p className="mt-1 flex items-baseline gap-1.5">
             <span className="tnum display text-[19px] leading-tight">
               {formatMoney(plan.priceMinor, PLAN_CURRENCY)}
             </span>
