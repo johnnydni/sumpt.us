@@ -100,6 +100,21 @@ write('public/icons/favicon.png', 64, {
   markHeight: 0.66,
 })
 
+/*
+ * Home screen, iOS.
+ *
+ * Two rules that differ from the icons above. It must be opaque and square:
+ * iOS composites an apple-touch-icon onto black and rounds it itself, so
+ * transparent corners come back as black ones. And it wants 180×180 — handing
+ * it the 192 the manifest uses only makes the device rescale.
+ */
+write('public/icons/apple-touch-icon.png', 180, {
+  background: WHITE,
+  foreground: INK,
+  radius: 0,
+  markHeight: 0.54,
+})
+
 // Maskable: full-bleed navy, mark kept inside the safe zone platforms crop to.
 write('public/icons/icon-512-maskable.png', 512, {
   background: NAVY,
