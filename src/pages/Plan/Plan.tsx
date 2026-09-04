@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import {
   CURRENT_PLAN_ID,
+  EXTENSION_PLANS,
   FREE_PLAN,
   ONE_TIME_PLANS,
   PAY_ONCE_REASONING,
@@ -58,6 +59,19 @@ export default function Plan() {
         <SectionHeader title="Monthly" />
         <div className="space-y-3">
           {SUBSCRIPTION_PLANS.map((plan) => (
+            <PlanCard key={plan.id} plan={plan} />
+          ))}
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <SectionHeader title="Extensions" />
+        <p className="-mt-1 mb-4 max-w-prose text-[13px] leading-relaxed text-muted">
+          Passes that sit alongside whichever plan you are on, for situations the tiers do not
+          cover. More will follow.
+        </p>
+        <div className="space-y-3">
+          {EXTENSION_PLANS.map((plan) => (
             <PlanCard key={plan.id} plan={plan} />
           ))}
         </div>

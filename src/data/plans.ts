@@ -88,10 +88,10 @@ export const ONE_TIME_PLANS: Plan[] = [
   },
   {
     id: 'lifetime-wg',
-    name: 'Lifetime + Household',
+    name: 'Lifetime + Household Pass',
     priceMinor: 1000,
     period: 'once',
-    positioning: 'The same, with the shared shopping list.',
+    positioning: 'The same, with the Household Pass included.',
     inherits: 'Lifetime',
     features: ['Shared shopping lists', 'Turn a finished list into a shared expense in one tap'],
   },
@@ -112,23 +112,33 @@ export const SUBSCRIPTION_PLANS: Plan[] = [
     ],
   },
   {
-    id: 'household',
-    name: 'Household',
-    priceMinor: 200,
-    period: 'month',
-    positioning: 'Just the shared list, nothing else.',
-    inherits: 'Free',
-    features: ['Shared shopping lists', 'Turn a finished list into a shared expense in one tap'],
-  },
-  {
     id: 'pro-household',
-    name: 'Pro + Household',
+    name: 'Pro + Household Pass',
     priceMinor: 600,
     period: 'month',
-    positioning: 'Both, for less than the two apart.',
+    positioning: 'Pro with the Household Pass included.',
     inherits: 'Pro',
     features: ['Shared shopping lists', 'Turn a finished list into a shared expense in one tap'],
     badge: 'Saves €1 a month',
+  },
+]
+
+/**
+ * Add-ons for a way of living together rather than a tier of the app.
+ *
+ * A shared flat is not a trip that ends, so it never fits the group ladder: the
+ * ledger simply rolls on. Keeping it a pass alongside the plans leaves room for
+ * the next situation that needs its own tools without growing a fourth tier.
+ */
+export const EXTENSION_PLANS: Plan[] = [
+  {
+    id: 'household',
+    name: 'Household Pass',
+    priceMinor: 200,
+    period: 'month',
+    positioning: 'For a shared flat, where the ledger never really ends.',
+    inherits: 'Free',
+    features: ['Shared shopping lists', 'Turn a finished list into a shared expense in one tap'],
   },
 ]
 
