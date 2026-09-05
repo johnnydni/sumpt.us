@@ -76,9 +76,15 @@ supabase/tests/run.sh
 DATABASE_URL='postgres://…' supabase/tests/run.sh --remote
 ```
 
-**Connect as a role without `BYPASSRLS`.** A superuser sees through every
-policy and will pass the entire isolation suite while the app leaks
-everything. This is the single easiest way to get a false green.
+The connection string from the dashboard is fine. Supabase's `postgres` role
+carries `BYPASSRLS`, which would ordinarily make an isolation suite pass while
+the app leaked everything — but each suite issues `set local role
+authenticated` before it checks anything, and Postgres tests that attribute
+against the *current* role, not the session's. Verified: the local runs happen
+as a superuser and still fail the moment a policy is wrong.
+
+That protection ends where a suite forgets the `set local role`. Any new
+assertion about who can see what belongs after one.
 
 Two behaviours the suites pin down because they surprise people:
 
