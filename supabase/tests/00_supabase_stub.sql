@@ -10,11 +10,21 @@ create extension if not exists pgcrypto;
 
 create schema if not exists auth;
 
+-- The columns the real table has that anything writing to it tends to set.
+-- Kept in step deliberately: a verification script written against the real
+-- platform has to be runnable here, or it ships to production untested.
 create table if not exists auth.users (
   id                  uuid primary key default gen_random_uuid(),
+  instance_id         uuid default '00000000-0000-0000-0000-000000000000',
+  aud                 varchar(255) default 'authenticated',
+  role                varchar(255) default 'authenticated',
   email               text unique,
+  encrypted_password  varchar(255),
+  email_confirmed_at  timestamptz,
+  raw_app_meta_data   jsonb not null default '{}'::jsonb,
   raw_user_meta_data  jsonb not null default '{}'::jsonb,
-  created_at          timestamptz not null default now()
+  created_at          timestamptz not null default now(),
+  updated_at          timestamptz not null default now()
 );
 
 create or replace function auth.uid()
