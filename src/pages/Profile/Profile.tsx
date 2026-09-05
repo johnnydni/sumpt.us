@@ -4,6 +4,8 @@ import {
   ChevronRight,
   CreditCard,
   Download,
+  LogIn,
+  LogOut,
   Fingerprint,
   Globe,
   Palette,
@@ -24,6 +26,9 @@ import { ConfirmDialog, Sheet } from '@/components/ui/Sheet'
 import { SectionHeader } from '@/components/ui/Primitives'
 import { Field, Input } from '@/components/ui/Field'
 import { useToast } from '@/components/ui/toastContext'
+import { useSession } from '@/hooks/useSession'
+import { isSupabaseConfigured } from '@/lib/supabase/client'
+import { deleteAccount, signOut } from '@/lib/supabase/auth'
 import { cn } from '@/lib/cn'
 
 export default function Profile() {
@@ -43,6 +48,9 @@ export default function Profile() {
   const [currencyOpen, setCurrencyOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmSignOut, setConfirmSignOut] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const { session } = useSession()
   const [draftName, setDraftName] = useState(user?.name ?? '')
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -159,19 +167,46 @@ export default function Profile() {
               setEditOpen(true)
             }}
           />
+          {/* Only offered where there is something to sign in to. */}
+          {isSupabaseConfigured &&
+            (session ? (
+              <SettingRow
+                icon={<LogOut size={17} strokeWidth={1.6} />}
+                label="Sign out"
+                value={session.user.email ?? undefined}
+                onClick={() => setConfirmSignOut(true)}
+              />
+            ) : (
+              <SettingRow
+                icon={<LogIn size={17} strokeWidth={1.6} />}
+                label="Sign in"
+                value="Not signed in"
+                to="/sign-in"
+              />
+            ))}
           <SettingRow
             icon={<Fingerprint size={17} strokeWidth={1.6} />}
             label="Security"
-            value="Device only"
+            value={session ? 'Signed in' : 'Device only'}
             onClick={() =>
-              toast.notice('Everything stays on this device — nothing to secure remotely yet.')
+              toast.notice(
+                session
+                  ? 'Your account protects what you share. Everything on this device stays readable without it.'
+                  : 'Everything stays on this device — nothing to secure remotely yet.',
+              )
             }
           />
           <SettingRow
             icon={<ShieldCheck size={17} strokeWidth={1.6} />}
             label="Privacy"
-            value="No data leaves the device"
-            onClick={() => toast.notice('sumpt.us sends nothing anywhere. No accounts, no servers.')}
+            value={session ? 'Shared groups sync' : 'No data leaves the device'}
+            onClick={() =>
+              toast.notice(
+                session
+                  ? 'Only groups you share leave this device, and only to the people in them.'
+                  : 'sumpt.us sends nothing anywhere. No accounts, no servers.',
+              )
+            }
           />
           <SettingRow
             icon={<Download size={17} strokeWidth={1.6} />}
@@ -198,6 +233,11 @@ export default function Profile() {
           <Button variant="danger" onClick={() => setConfirmReset(true)}>
             Erase everything
           </Button>
+          {isSupabaseConfigured && session && (
+            <Button variant="danger" onClick={() => setConfirmDelete(true)}>
+              Delete account
+            </Button>
+          )}
         </div>
         <p className="mt-3 max-w-prose text-[13px] leading-relaxed text-muted">
           sumpt.us keeps all of this in your browser&rsquo;s local storage. Clearing site data
@@ -268,6 +308,39 @@ export default function Profile() {
           )}
         </Field>
       </Sheet>
+
+      <ConfirmDialog
+        open={confirmSignOut}
+        onOpenChange={setConfirmSignOut}
+        title="Sign out?"
+        body="Everything on this device stays exactly where it is. Sign back in whenever you want."
+        confirmLabel="Sign out"
+        onConfirm={async () => {
+          try {
+            await signOut()
+            toast.confirm('Signed out')
+          } catch {
+            toast.notice('Could not sign out. Try again in a moment.')
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        onOpenChange={setConfirmDelete}
+        title="Delete your account?"
+        body="Your account and everything shared through it is removed for good. Data held only on this device is untouched — erase that separately if you want it gone."
+        confirmLabel="Delete account"
+        destructive
+        onConfirm={async () => {
+          try {
+            await deleteAccount()
+            toast.confirm('Account deleted')
+          } catch {
+            toast.notice('Could not delete the account. Try again in a moment.')
+          }
+        }}
+      />
 
       <ConfirmDialog
         open={confirmReset}

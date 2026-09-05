@@ -27,6 +27,7 @@ const Friends = lazy(() => import('@/pages/Friends/Friends'))
 const FriendDetail = lazy(() => import('@/pages/Friends/FriendDetail'))
 const Profile = lazy(() => import('@/pages/Profile/Profile'))
 const Plan = lazy(() => import('@/pages/Plan/Plan'))
+const SignIn = lazy(() => import('@/pages/SignIn/SignIn'))
 
 export default function App() {
   const hydrate = useAppStore((s) => s.hydrate)
@@ -55,6 +56,7 @@ export default function App() {
               <Routes>
                 <Route path="/" element={<Entry />} />
                 <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/sign-in" element={<SignIn />} />
 
                 <Route element={<RequireOnboarding />}>
                   <Route element={<AppShell />}>

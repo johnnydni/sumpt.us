@@ -63,8 +63,11 @@ create table public.identities (
   -- it over, which is what carries their history with them.
   user_id      uuid unique references auth.users on delete set null,
 
-  -- Who introduced this person. For an account's own identity, itself.
-  created_by   uuid not null references auth.users on delete cascade,
+  -- Who introduced this person. For an account's own identity, itself. Nulled
+  -- rather than cascaded when that account goes: a placeholder someone typed
+  -- in is a member of a group, and deleting the person who added them would
+  -- take a participant out of other people's expenses.
+  created_by   uuid references auth.users on delete set null,
 
   display_name text not null check (length(btrim(display_name)) between 1 and 80),
   avatar_url   text,
@@ -100,7 +103,9 @@ create table public.groups (
   ends_on     date,
   constraint groups_dates_ordered check (ends_on is null or starts_on is null or ends_on >= starts_on),
 
-  created_by  uuid not null references auth.users on delete restrict,
+  -- Authorship is metadata; the group is not. Losing who created it when they
+  -- delete their account is acceptable, losing the group is not.
+  created_by  uuid references auth.users on delete set null,
   archived_at timestamptz,
   settled_at  timestamptz,
   created_at  timestamptz not null default now(),
@@ -148,7 +153,7 @@ create table public.expenses (
     or (foreign_amount_minor is not null and foreign_currency is not null and fx_rate_e4 is not null)
   ),
 
-  created_by   uuid not null references auth.users on delete restrict,
+  created_by   uuid references auth.users on delete set null,
   created_at   timestamptz not null default now(),
   updated_at   timestamptz
 );
@@ -191,7 +196,7 @@ create table public.settlements (
   currency       public.currency_code not null,
   note           text check (note is null or length(note) <= 2000),
 
-  created_by     uuid not null references auth.users on delete restrict,
+  created_by     uuid references auth.users on delete set null,
   created_at     timestamptz not null default now()
 );
 
@@ -237,7 +242,7 @@ create table public.entitlements (
 -- the account row.
 create table public.group_passes (
   group_id   uuid primary key references public.groups on delete cascade,
-  purchased_by uuid not null references auth.users on delete restrict,
+  purchased_by uuid references auth.users on delete set null,
   starts_at  timestamptz not null default now(),
   expires_at timestamptz not null,
   created_at timestamptz not null default now()
