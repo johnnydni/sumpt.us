@@ -35,8 +35,15 @@ jobs:
       - name: Build
         # BASE_PATH must match how Pages serves the site. For a project page
         # that is /<repo>/; set it to "/" if you move to a custom domain.
+        #
+        # The Supabase pair is optional on purpose. Absent, the build ships the
+        # local-only app that needs no backend — which is what should be live
+        # until sharing actually works. Add the two repository secrets and the
+        # next deploy has accounts; nothing else changes.
         env:
           BASE_PATH: /${{ github.event.repository.name }}/
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - uses: actions/configure-pages@v5
