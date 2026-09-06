@@ -20,7 +20,7 @@ npm run build      # type-checks, then builds to dist/
 ```
 
 The dev server runs at the root (`http://localhost:5173/`). Only production
-builds carry the `/sumpt.us/` sub-path that GitHub Pages needs — a dev server
+builds carry the `/sumptus/` sub-path that GitHub Pages needs — a dev server
 under that prefix answers 404 for every plain URL, which looks exactly like a
 missing `index.html`.
 

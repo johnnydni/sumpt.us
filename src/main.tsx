@@ -7,7 +7,7 @@ import './styles/index.css'
 /**
  * The sub-path the router should treat as its root.
  *
- * Normally this is whatever Vite was built with — "/sumpt.us" on GitHub Pages,
+ * Normally this is whatever Vite was built with — "/sumptus" on GitHub Pages,
  * "" in dev. But a build can end up served from somewhere else (a custom
  * domain, a renamed repo), and then a hardcoded basename makes every route
  * fail to match. So trust the address bar: only use the built prefix if the

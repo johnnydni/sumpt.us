@@ -72,11 +72,11 @@ Two traps that make a sound layout look broken:
 - Set the viewport *before* scrolling. Resizing afterwards resets the position.
 
 `npm run preview` does its own SPA fallback, so it hides exactly the Pages
-routing bugs worth catching. Serve `dist/` under a `/sumpt.us/` path with a
+routing bugs worth catching. Serve `dist/` under a `/sumptus/` path with a
 plain static server instead.
 
 That path is the repository name, not the product name: the app is called
-sumptus, the repository is still `sumpt.us`. The deploy workflow reads the real
+sumptus, and so is the repository now. The deploy workflow reads the real
 name from GitHub, so renaming the repository moves the live site on its own —
 `REPO` in `vite.config.ts` is the local build's copy of it and has to be changed
 by hand at the same time.

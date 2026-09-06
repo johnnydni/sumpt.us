@@ -25,7 +25,7 @@ import fs from 'node:fs'
  * a production build run by hand; change it when the repository is renamed and
  * the local build will match the live one again.
  */
-const REPO = 'sumpt.us'
+const REPO = 'sumptus'
 
 function resolveBase(command: 'serve' | 'build'): string {
   if (process.env.BASE_PATH) return process.env.BASE_PATH
@@ -34,7 +34,7 @@ function resolveBase(command: 'serve' | 'build'): string {
 
 /**
  * GitHub Pages has no SPA rewrite. Shipping a byte-identical 404.html means a
- * deep link like /sumpt.us/groups/japan-trip is answered with the app shell,
+ * deep link like /sumptus/groups/japan-trip is answered with the app shell,
  * which then routes client-side. No redirect hop, no flash.
  */
 function spaFallback() {
