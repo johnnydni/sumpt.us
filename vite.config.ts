@@ -71,17 +71,6 @@ export default defineConfig(({ command }) => {
         ],
       },
       workbox: {
-        /*
-         * Deliberately no mp4/webm.
-         *
-         * Media elements ask for byte ranges, and a precached response is
-         * replayed whole with a 200. Chromium tolerates that; Safari does not —
-         * it stalls, silently, with no error event to fall back from, and the
-         * splash sits white until its ceiling. Left out of the precache, the
-         * clip is a normal request the server answers with a 206, and the HTTP
-         * cache still keeps it after the first launch. A splash is not worth an
-         * offline guarantee it cannot honour on half the devices.
-         */
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         navigateFallback: `${base}index.html`,
         runtimeCaching: [
