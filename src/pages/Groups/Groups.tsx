@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import { useAppStore } from '@/store/appStore'
 import { usePeople } from '@/hooks/usePeople'
-import { calculateGroupBalances } from '@/lib/calculations'
+import { calculateGroupBalances, holdsTicket } from '@/lib/calculations'
 import { FREE_GROUP_TICKETS } from '@/data/plans'
 import { GroupCard } from '@/components/groups/GroupCard'
 import { EmptyState } from '@/components/ui/Primitives'
@@ -42,19 +42,18 @@ export default function Groups() {
   /*
    * Tickets spent, not groups kept. A settled group gives its ticket back, so
    * counting rows would show a limit the plan does not actually impose.
-   * Filtered on the unsearched list — a search term must not change the count.
+   * Counted on the unsearched list — a search term must not change what you
+   * are allowed to have.
    */
-  const openGroups = useMemo(
+  const spentTickets = useMemo(
     () =>
-      groups.filter((group) => {
-        const memberIds = group.members.map((m) => m.personId)
-        const balances = calculateGroupBalances(
+      groups.filter((group) =>
+        holdsTicket(
           expenses.filter((e) => e.groupId === group.id),
           settlements.filter((s) => s.groupId === group.id),
-          memberIds,
-        )
-        return balances.some((balance) => balance.netMinor !== 0)
-      }).length,
+          group.members.map((m) => m.personId),
+        ),
+      ).length,
     [groups, expenses, settlements],
   )
 
@@ -62,7 +61,7 @@ export default function Groups() {
     <div>
       <PageHeader
         title="Groups"
-        titleSuffix={`${openGroups}/${FREE_GROUP_TICKETS}`}
+        titleSuffix={`${spentTickets}/${FREE_GROUP_TICKETS}`}
         backTo="/overview"
         action={
           <Button asChild size="sm">

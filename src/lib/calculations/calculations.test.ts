@@ -6,6 +6,7 @@ import {
   calculateGroupBalances,
   calculatePairwiseObligations,
   calculateUserBalance,
+  holdsTicket,
   settleBalances,
   simplifyDebts,
   validateSplit,
@@ -470,5 +471,62 @@ describe('allocateAcrossGroups', () => {
       const parts = allocateAcrossGroups(amount, debts)
       expect(parts.reduce((sum, p) => sum + p.amountMinor, 0)).toBe(amount)
     }
+  })
+})
+
+describe('holdsTicket', () => {
+  const members = ['a', 'b']
+  const spend = (paidBy: string, amountMinor: number): Expense => ({
+    id: `e-${paidBy}-${amountMinor}`,
+    groupId: 'g',
+    title: 'Dinner',
+    amountMinor,
+    currency: 'EUR',
+    paidBy,
+    splitMethod: 'equal',
+    participants: members.map((personId) => ({
+      personId,
+      shareMinor: amountMinor / members.length,
+    })),
+    category: 'food',
+    createdAt: '2026-08-01T12:00:00.000Z',
+    updatedAt: '2026-08-01T12:00:00.000Z',
+  })
+
+  it('holds the ticket of a group nobody has spent in yet', () => {
+    // The bug this pins down: an untouched group has nothing but zero
+    // balances, which is not the same as having been settled. Creating a
+    // group spends a ticket — that is the whole rule.
+    expect(holdsTicket([], [], members)).toBe(true)
+  })
+
+  it('holds it while anyone is still owed', () => {
+    expect(holdsTicket([spend('a', 1000)], [], members)).toBe(true)
+  })
+
+  it('gives it back once the group comes out even', () => {
+    const settlement: Settlement = {
+      id: 's1',
+      fromPersonId: 'b',
+      toPersonId: 'a',
+      amountMinor: 500,
+      currency: 'EUR',
+      groupId: 'g',
+      createdAt: '2026-08-02T12:00:00.000Z',
+    }
+    expect(holdsTicket([spend('a', 1000)], [settlement], members)).toBe(false)
+  })
+
+  it('holds it again as soon as a settled group is spent in again', () => {
+    const settlement: Settlement = {
+      id: 's1',
+      fromPersonId: 'b',
+      toPersonId: 'a',
+      amountMinor: 500,
+      currency: 'EUR',
+      groupId: 'g',
+      createdAt: '2026-08-02T12:00:00.000Z',
+    }
+    expect(holdsTicket([spend('a', 1000), spend('b', 400)], [settlement], members)).toBe(true)
   })
 })
