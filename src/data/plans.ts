@@ -11,6 +11,21 @@ export const PLAN_CURRENCY: CurrencyCode = 'EUR'
 
 export type BillingPeriod = 'once' | 'month' | 'week'
 
+/**
+ * One rung of a price ladder.
+ *
+ * Store purchases cannot be priced at runtime — every amount has to exist as a
+ * registered product before anyone can buy it. So a rule like "a euro per extra
+ * week" has to become a short list of fixed prices, or it becomes two dozen
+ * products to keep in step across two stores.
+ */
+export interface PriceTier {
+  /** The longest trip this rung covers, in days. */
+  upToDays: number
+  label: string
+  priceMinor: number
+}
+
 export interface Plan {
   id: string
   name: string
@@ -26,6 +41,8 @@ export interface Plan {
   badge?: string
   /** A closing line under the list — a pointer, not a feature. */
   footnote?: string
+  /** Priced by length rather than by a single figure. See PriceTier. */
+  tiers?: PriceTier[]
 }
 
 /**
@@ -34,6 +51,11 @@ export interface Plan {
  * A ticket is spent when a group is created and comes back when that group is
  * settled, so the limit never punishes logging expenses — only leaving them
  * unresolved, which is the one habit the app exists to fix.
+ *
+ * The escape hatch matters as much as the rule. Someone always forgets to pay
+ * their eleven euros, and without a way out that one person could hold a ticket
+ * hostage forever. After a week the group can be closed by hand and the ticket
+ * comes back, settled or not.
  */
 export const FREE_PLAN: Plan = {
   id: 'free',
@@ -44,6 +66,7 @@ export const FREE_PLAN: Plan = {
   features: [
     'Two group tickets — a new group spends one',
     'Settle a group and its ticket comes back',
+    'Still open after a week? Close it by hand and take the ticket back anyway',
     'Unlimited expenses, friends and history',
     'Every split method — equal, exact, percentage, shares',
     'Smart Settlement: the fewest payments that clear the group',
@@ -149,12 +172,41 @@ export const EXTENSION_PLANS: Plan[] = [
  * Bought inside a group rather than here: it unlocks that one trip, and lands
  * in the group as a shared expense so the whole table chips in.
  */
+/**
+ * Priced by the length of the trip: a euro a day, three for anything up to
+ * three weeks, then a euro for each further week — rounded onto five rungs so
+ * it can exist as five store products rather than twenty-four.
+ *
+ * The last rung is six months because that is where trips are capped, so no
+ * trip can fall past the end of the ladder.
+ */
+export const TRIP_TIERS: PriceTier[] = [
+  { upToDays: 1, label: 'A day', priceMinor: 100 },
+  { upToDays: 21, label: 'Up to 3 weeks', priceMinor: 300 },
+  { upToDays: 42, label: 'Up to 6 weeks', priceMinor: 600 },
+  { upToDays: 84, label: 'Up to 12 weeks', priceMinor: 1200 },
+  { upToDays: 182, label: 'Up to 6 months', priceMinor: 2600 },
+]
+
+/**
+ * The rung a trip of this length falls on.
+ *
+ * Rounds up, never down: a trip is never sold a pass that runs out before it
+ * does. Anything past the last rung gets the last rung, which cannot happen
+ * while trips are capped at six months but should not become a crash if that
+ * cap ever moves.
+ */
+export function tripTierFor(days: number): PriceTier {
+  return TRIP_TIERS.find((tier) => days <= tier.upToDays) ?? TRIP_TIERS[TRIP_TIERS.length - 1]
+}
+
 export const TRIP_PLAN: Plan = {
   id: 'trip',
   name: 'Trip Pass',
-  priceMinor: 100,
-  period: 'week',
-  positioning: 'Pro for one trip, split by everyone on it.',
+  priceMinor: TRIP_TIERS[0].priceMinor,
+  period: 'once',
+  tiers: TRIP_TIERS,
+  positioning: 'Pro for one trip, priced by how long it runs.',
   features: [
     'Every Pro feature, for one group, for as long as the trip runs',
     'Booked into the group as a shared expense — nobody pays for it alone',

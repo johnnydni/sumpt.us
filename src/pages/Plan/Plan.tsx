@@ -150,14 +150,32 @@ function PlanCard({ plan, current = false }: { plan: PlanTier; current?: boolean
         {!free && (
           <p className="mt-1 flex items-baseline gap-1.5">
             <span className="tnum display text-[19px] leading-tight">
-              {formatMoney(plan.priceMinor, PLAN_CURRENCY)}
+              {plan.tiers ? `from ${formatMoney(plan.priceMinor, PLAN_CURRENCY)}` : formatMoney(plan.priceMinor, PLAN_CURRENCY)}
             </span>
-            <span className="text-[13px] text-muted">{periodLabel[plan.period]}</span>
+            {!plan.tiers && (
+              <span className="text-[13px] text-muted">{periodLabel[plan.period]}</span>
+            )}
           </p>
         )}
       </header>
 
       <p className="mt-1.5 text-sm leading-relaxed text-muted">{plan.positioning}</p>
+
+      {/*
+        The ladder is the price, so it sits with the price rather than among the
+        features — what you get does not change with the rung, only what it
+        costs.
+      */}
+      {plan.tiers && (
+        <dl className="mt-3.5 divide-y divide-line border-t border-line text-sm">
+          {plan.tiers.map((tier) => (
+            <div key={tier.upToDays} className="flex items-baseline justify-between gap-4 py-2">
+              <dt className="text-muted">{tier.label}</dt>
+              <dd className="tnum">{formatMoney(tier.priceMinor, PLAN_CURRENCY)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
 
       {plan.badge && (
         <div className="mt-3">

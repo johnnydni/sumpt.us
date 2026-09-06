@@ -92,3 +92,9 @@ The tier boundary is drawn on cost, not on feature value: anything with no
 per-use cost can live in a one-time plan, anything with a recurring third-party
 bill has to sit behind a subscription. Check new features against that before
 adding them to `ONE_TIME_PLANS`.
+
+Selling happens through the stores, which cannot price anything at runtime:
+every amount has to exist as a registered product first. So a rule like "a euro
+per further week" becomes a short ladder of fixed prices — `TRIP_TIERS` — and
+not a formula. Keep any ladder to a handful of rungs; each one is a product to
+keep in step across two stores.
