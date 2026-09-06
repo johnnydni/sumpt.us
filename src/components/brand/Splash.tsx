@@ -21,6 +21,14 @@ const CEILING_MS = 3200
 /** Used when the video is not playing: reduced motion, or a failure. */
 const STATIC_HOLD_MS = 700
 const REDUCED_HOLD_MS = 320
+/**
+ * How long a mounted clip gets to produce its first frame before it counts as
+ * broken. A stall is the one failure that fires no event at all — Safari
+ * answers a byte-range request served whole by stalling silently — and the
+ * result is a white screen for the full ceiling. Nothing on screen is a worse
+ * outcome than the static lockup, so it is never allowed to be the outcome.
+ */
+const STALL_MS = 900
 
 /** What this particular launch shows. Decided once — see below. */
 interface Plan {
@@ -88,6 +96,10 @@ export function Splash({ onDone }: { onDone: () => void }) {
     // still possible — a data-saver mode, a policy, a codec. Treat it as a
     // failure and show the lockup rather than a frozen first frame.
     void video.play().catch(() => setFailed(true))
+    const watchdog = setTimeout(() => {
+      if (video.currentTime === 0) setFailed(true)
+    }, STALL_MS)
+    return () => clearTimeout(watchdog)
   }, [playing])
 
   /*
@@ -123,7 +135,7 @@ export function Splash({ onDone }: { onDone: () => void }) {
           preload="auto"
           onEnded={finish}
           onError={() => setFailed(true)}
-          className="w-full max-w-[520px] px-6"
+          className="w-full max-w-[560px]"
           /*
            * The clip's white is a compressed 252–254, not the canvas's 255.
            * A hard edge between the two shows as a faint rectangle on a good
