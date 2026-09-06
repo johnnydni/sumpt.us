@@ -9,6 +9,7 @@ import {
   Fingerprint,
   Globe,
   Palette,
+  Play,
   RotateCcw,
   ShieldCheck,
   Sparkles,
@@ -146,6 +147,17 @@ export default function Profile() {
             description="Turns off transitions and counting animations."
             checked={preferences.reduceMotion}
             onChange={(checked) => setPreferences({ reduceMotion: checked })}
+          />
+          <ToggleRow
+            icon={<Play size={17} strokeWidth={1.6} />}
+            label="Intro animation"
+            description={
+              preferences.reduceMotion
+                ? 'Held back while Reduce motion is on.'
+                : 'Plays the sumpt.us clip when the app starts cold.'
+            }
+            checked={preferences.playIntro}
+            onChange={(checked) => setPreferences({ playIntro: checked })}
           />
         </div>
       </section>

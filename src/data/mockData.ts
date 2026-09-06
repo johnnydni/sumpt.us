@@ -10,7 +10,7 @@ import type {
   User,
 } from '@/types'
 import { calculateExpenseShares } from '@/lib/calculations'
-import { SCHEMA_VERSION } from '@/store/persistence/types'
+import { DEFAULT_PREFERENCES, SCHEMA_VERSION } from '@/store/persistence/types'
 
 export const CATEGORIES: Category[] = [
   { id: 'food', label: 'Food', icon: 'UtensilsCrossed', color: '#C86632' },
@@ -373,12 +373,7 @@ export function createDemoState(): PersistedState {
     groups,
     expenses: seededExpenses.map(buildExpense),
     settlements,
-    preferences: {
-      currency: 'EUR',
-      language: 'en',
-      notifications: true,
-      reduceMotion: false,
-    },
+    preferences: { ...DEFAULT_PREFERENCES },
   }
 }
 
@@ -392,11 +387,6 @@ export function createEmptyState(): PersistedState {
     groups: [],
     expenses: [],
     settlements: [],
-    preferences: {
-      currency: 'EUR',
-      language: 'en',
-      notifications: true,
-      reduceMotion: false,
-    },
+    preferences: { ...DEFAULT_PREFERENCES },
   }
 }

@@ -10,7 +10,7 @@ rather than merging:
 
 ```bash
 npm run lint
-npm test -- --run          # 40 tests, all green
+npm test -- --run          # every test green, none skipped
 npm run build              # type-checks first
 cmp dist/index.html dist/404.html   # the Pages SPA fallback
 ```

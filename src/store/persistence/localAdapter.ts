@@ -1,6 +1,6 @@
 import type { PersistedState } from '@/types'
 import type { PersistenceAdapter } from './types'
-import { SCHEMA_VERSION } from './types'
+import { DEFAULT_PREFERENCES, SCHEMA_VERSION } from './types'
 
 const STORAGE_KEY = 'sumptus.state.v1'
 
@@ -22,7 +22,7 @@ export class LocalStorageAdapter implements PersistenceAdapter {
       if (!raw) return null
       const parsed = JSON.parse(raw) as PersistedState
       if (parsed.version !== SCHEMA_VERSION) return migrate(parsed)
-      return parsed
+      return withDefaults(parsed)
     } catch {
       // Corrupt or unavailable storage (private mode, quota) must not brick the
       // app — fall through to the seeded demo state instead.
@@ -77,6 +77,19 @@ export class LocalStorageAdapter implements PersistenceAdapter {
   async removeExpense() {}
   async insertSettlement() {}
   async removeSettlement() {}
+}
+
+/**
+ * Fill in preferences an older install never wrote.
+ *
+ * Adding a key to `Preferences` is not a schema change worth a version bump —
+ * bumping discards the store, and an expense history is not recoverable. But
+ * without this merge the new key arrives as `undefined` for everyone who
+ * already has the app, and `undefined` reads as "off" for anything that
+ * defaults to on.
+ */
+function withDefaults(state: PersistedState): PersistedState {
+  return { ...state, preferences: { ...DEFAULT_PREFERENCES, ...state.preferences } }
 }
 
 /**

@@ -168,6 +168,14 @@ export interface Preferences {
   language: 'en' | 'de'
   notifications: boolean
   reduceMotion: boolean
+  /** Whether the brand clip runs on cold start. Off after "Skip intro". */
+  playIntro: boolean
+  /**
+   * Not a choice — a record. The skip control only appears once the clip has
+   * had one clean run, so the first launch is the brand moment and nothing
+   * else.
+   */
+  introSeen: boolean
 }
 
 /** Everything the persistence layer owns. Kept flat so it maps to tables later. */

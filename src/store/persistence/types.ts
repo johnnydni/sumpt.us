@@ -11,6 +11,21 @@ import type {
 export const SCHEMA_VERSION = 1
 
 /**
+ * The shape a fresh install starts from, and the floor every load is merged
+ * onto. Keeping it here rather than beside the seed data means a preference
+ * added later cannot arrive as `undefined` in an install that predates it —
+ * which would otherwise read as "off" for anything defaulting to on.
+ */
+export const DEFAULT_PREFERENCES: Preferences = {
+  currency: 'EUR',
+  language: 'en',
+  notifications: true,
+  reduceMotion: false,
+  playIntro: true,
+  introSeen: false,
+}
+
+/**
  * The only contract the app has with storage.
  *
  * Components never import this — they call actions on the Zustand store, which
