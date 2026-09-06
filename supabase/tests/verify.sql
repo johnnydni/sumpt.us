@@ -1,4 +1,4 @@
--- sumpt.us — one paste into the Supabase SQL editor, one table back.
+-- sumptus — one paste into the Supabase SQL editor, one table back.
 --
 -- Everything here happens inside a transaction that rolls back, so the project
 -- is left exactly as it was. Run it after the migrations. Every row should say
@@ -49,9 +49,9 @@ end $$;
 
 insert into auth.users (id, email, raw_user_meta_data, instance_id, aud, role)
 values
-  ('aaaaaaaa-0000-4000-8000-000000000001', 'verify-anna@sumpt.us.invalid',
+  ('aaaaaaaa-0000-4000-8000-000000000001', 'verify-anna@sumptus.invalid',
    '{"full_name":"Verify Anna"}', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated'),
-  ('bbbbbbbb-0000-4000-8000-000000000002', 'verify-ben@sumpt.us.invalid',
+  ('bbbbbbbb-0000-4000-8000-000000000002', 'verify-ben@sumptus.invalid',
    '{"full_name":"Verify Ben"}',  '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated');
 
 select pg_temp.check('signup: profile created',

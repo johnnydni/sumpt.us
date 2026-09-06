@@ -1,4 +1,4 @@
--- sumpt.us — schema
+-- sumptus — schema
 --
 -- Two decisions shape everything below.
 --

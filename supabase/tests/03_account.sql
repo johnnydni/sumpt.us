@@ -1,4 +1,4 @@
--- sumpt.us — deleting an account without rewriting other people's ledgers
+-- sumptus — deleting an account without rewriting other people's ledgers
 --
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/03_account.sql
 

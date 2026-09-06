@@ -1,4 +1,4 @@
--- sumpt.us — deleting your own account
+-- sumptus — deleting your own account
 --
 -- The client has no rights over auth.users, and granting it any would grant it
 -- everybody's. So deletion runs through a security-definer function that can

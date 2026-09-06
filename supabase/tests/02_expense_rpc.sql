@@ -1,4 +1,4 @@
--- sumpt.us — the expense write path
+-- sumptus — the expense write path
 --
 --   psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f supabase/tests/02_expense_rpc.sql
 

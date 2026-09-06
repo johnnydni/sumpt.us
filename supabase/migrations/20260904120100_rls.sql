@@ -1,4 +1,4 @@
--- sumpt.us — row level security
+-- sumptus — row level security
 --
 -- One rule carries almost everything: you may see a group if you belong to it,
 -- and everything inside a group follows from that.

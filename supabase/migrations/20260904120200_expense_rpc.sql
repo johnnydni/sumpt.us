@@ -1,4 +1,4 @@
--- sumpt.us — writing an expense as one act
+-- sumptus — writing an expense as one act
 --
 -- An expense and its split are one fact, but two REST inserts are two
 -- transactions: if the second fails, the group keeps an expense that somebody

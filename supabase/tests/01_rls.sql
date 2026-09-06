@@ -1,4 +1,4 @@
--- sumpt.us — row level security, verified
+-- sumptus — row level security, verified
 --
 -- Each check either prints a line or aborts the script. Run it against a fresh
 -- database (or inside a transaction you roll back) with a role that is not
