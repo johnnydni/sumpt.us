@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import type { Expense } from '@/types'
 import { CategoryIcon } from './CategoryIcon'
 import { formatMoney } from '@/lib/formatting'
+import { dateStack } from '@/lib/dates'
 import { cn } from '@/lib/cn'
 
 interface ExpenseRowProps {
@@ -11,6 +12,8 @@ interface ExpenseRowProps {
   /** Your share, signed relative to you. Omitted where it isn't meaningful. */
   yourShareMinor?: number
   showCategory?: boolean
+  /** The stacked date on the left. For lists that are ordered by time. */
+  showDate?: boolean
 }
 
 export function ExpenseRow({
@@ -18,12 +21,24 @@ export function ExpenseRow({
   subtitle,
   yourShareMinor,
   showCategory = true,
+  showDate = false,
 }: ExpenseRowProps) {
+  const { month, day } = dateStack(expense.createdAt)
+
   return (
     <Link
       to={`/expenses/${expense.id}`}
-      className="flex items-center gap-3.5 py-3.5 transition-colors duration-micro hover:bg-surface/60"
+      className="flex items-center gap-3 py-3.5 transition-colors duration-micro hover:bg-surface/60"
     >
+      {/* Fixed width and tabular figures: the column only reads as a column if
+          "1" and "31" occupy the same space. */}
+      {showDate && (
+        <span className="w-7 shrink-0 text-center leading-none">
+          <span className="block text-[10px] uppercase tracking-[0.08em] text-muted">{month}</span>
+          <span className="tnum mt-0.5 block text-[15px] font-medium">{day}</span>
+        </span>
+      )}
+
       {showCategory && (
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-line">
           <CategoryIcon category={expense.category} />

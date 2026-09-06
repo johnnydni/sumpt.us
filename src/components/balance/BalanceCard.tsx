@@ -42,14 +42,15 @@ export function BalanceCard({
         )}
       />
 
+      {/* Settled is good news, so it reads in the same green every cleared
+          balance uses — not the amber that elsewhere means "look at this". */}
       <p
         className={cn(
           'mt-3 flex items-center gap-2 text-sm',
-          settled ? 'text-neutralAccent' : 'text-muted',
+          settled ? 'text-positive' : 'text-muted',
         )}
       >
-        {!settled && <StatusDot tone={positive ? 'positive' : 'negative'} />}
-        {settled && <StatusDot tone="neutral" />}
+        <StatusDot tone={settled || positive ? 'positive' : 'negative'} />
         {caption}
       </p>
 
@@ -65,14 +66,18 @@ export function BalanceCard({
         </div>
       )}
 
+      {/* The one thing to do about a balance, so it looks like a button and
+          sits where a thumb ends up rather than trailing the text on the left. */}
       {!settled && (
-        <Link
-          to="/settle"
-          className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-navy transition-opacity hover:opacity-70"
-        >
-          Settle up
-          <ArrowUpRight size={15} strokeWidth={2} />
-        </Link>
+        <div className="mt-5 flex justify-end">
+          <Link
+            to="/settle"
+            className="inline-flex items-center gap-1.5 rounded-full bg-navy px-4 py-2 text-sm font-medium text-canvas transition-opacity hover:opacity-90 active:opacity-80"
+          >
+            Settle up
+            <ArrowUpRight size={15} strokeWidth={2} />
+          </Link>
+        </div>
       )}
     </section>
   )

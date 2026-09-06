@@ -63,6 +63,14 @@ export interface Plan {
  * costs nothing to run, so it belongs in a plan you buy once rather than one
  * that bills every month.
  */
+/**
+ * How many groups a Free account can have open at once.
+ *
+ * The number the ticket rule is written around, kept beside the copy that
+ * quotes it so the two cannot drift apart.
+ */
+export const FREE_GROUP_TICKETS = 2
+
 export const FREE_PLAN: Plan = {
   id: 'free',
   name: 'Free',

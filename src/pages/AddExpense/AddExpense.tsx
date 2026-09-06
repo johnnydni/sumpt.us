@@ -7,6 +7,7 @@ import { useAppStore } from '@/store/appStore'
 import { usePeople } from '@/hooks/usePeople'
 import { CATEGORIES } from '@/data/mockData'
 import { calculateExpenseShares, validateSplit } from '@/lib/calculations'
+import { atSameTimeOfDay, dayKey } from '@/lib/dates'
 import { minorToInput, parseAmountToMinor } from '@/lib/currency'
 import { formatMoney } from '@/lib/formatting'
 import { PageHeader } from '@/components/navigation/PageHeader'
@@ -51,6 +52,7 @@ export default function AddExpense() {
   const [title, setTitle] = useState(() => editing?.title ?? '')
   const [paidBy, setPaidBy] = useState(() => editing?.paidBy ?? people.me ?? '')
   const [category, setCategory] = useState<CategoryId>(() => editing?.category ?? 'food')
+  const [spentOn, setSpentOn] = useState(() => dayKey(editing?.createdAt ?? new Date()))
   const [selected, setSelected] = useState<string[]>(
     () => editing?.participants.map((p) => p.personId) ?? [],
   )
@@ -148,6 +150,7 @@ export default function AddExpense() {
       splitMethod: split.method,
       participants,
       category,
+      createdAt: atSameTimeOfDay(spentOn, editing?.createdAt),
     }
 
     if (editing) {
@@ -224,7 +227,26 @@ export default function AddExpense() {
         </Field>
       </motion.div>
 
-      <motion.div {...stagger(2)} className="mt-6 grid gap-2 sm:grid-cols-2">
+      {/*
+        The date is editable because an expense is almost never logged when it
+        happened — it is logged at the next quiet moment, which is often the
+        next day and sometimes the flight home.
+      */}
+      <motion.div {...stagger(2)} className="mt-6">
+        <Field label="When">
+          {({ id }) => (
+            <Input
+              id={id}
+              type="date"
+              value={spentOn}
+              max={dayKey(new Date())}
+              onChange={(event) => setSpentOn(event.target.value || dayKey(new Date()))}
+            />
+          )}
+        </Field>
+      </motion.div>
+
+      <motion.div {...stagger(3)} className="mt-6 grid gap-2 sm:grid-cols-2">
         <SelectorButton
           label="Group"
           value={group?.name ?? 'Pick a group'}
@@ -246,7 +268,7 @@ export default function AddExpense() {
         />
       </motion.div>
 
-      <motion.div {...stagger(3)} className="mt-6">
+      <motion.div {...stagger(4)} className="mt-6">
         <p className="eyebrow mb-2">Category</p>
         <div className="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 sm:mx-0 sm:flex-wrap sm:px-0">
           {CATEGORIES.map((option) => (
@@ -272,7 +294,7 @@ export default function AddExpense() {
         </div>
       </motion.div>
 
-      <motion.div {...stagger(4)} className="mt-8">
+      <motion.div {...stagger(5)} className="mt-8">
         <ParticipantPicker
           people={members}
           selected={selected}
@@ -315,7 +337,7 @@ export default function AddExpense() {
         </div>
       </motion.div>
 
-      <motion.div {...stagger(5)} className="mt-8">
+      <motion.div {...stagger(6)} className="mt-8">
         <Button size="lg" full onClick={submit}>
           {editing ? 'Save changes' : 'Add expense'}
         </Button>

@@ -43,6 +43,69 @@ export function greeting(now = new Date()): string {
 }
 
 /**
+ * Move a timestamp onto a chosen day, keeping the time of day it already had.
+ *
+ * A date picker only offers a day, but the lists sort on the full timestamp.
+ * Dropping everything to midnight would tie every back-dated expense with
+ * every other, and ties order by whatever the array happened to hold. Keeping
+ * the original clock time — or now's, for something new — leaves the ordering
+ * meaningful. An unchanged day is returned untouched rather than rebuilt.
+ */
+export function atSameTimeOfDay(day: string, existing?: string): string {
+  const clock = existing ? toDate(existing) : new Date()
+  if (existing && dayKey(clock) === day) return existing
+  const [year, month, date] = day.split('-').map(Number)
+  const moved = new Date(clock)
+  moved.setFullYear(year, month - 1, date)
+  return moved.toISOString()
+}
+
+/** "Aug" over "06" — the stacked date beside a row. */
+export function dateStack(value: string | Date): { month: string; day: string } {
+  const date = toDate(value)
+  return { month: format(date, 'MMM'), day: format(date, 'dd') }
+}
+
+/** Section headings for a list segmented by month. */
+export function formatMonthHeading(value: string | Date): string {
+  const date = toDate(value)
+  // The year only earns its place once it is not the current one.
+  return format(date, date.getFullYear() === new Date().getFullYear() ? 'MMMM' : 'MMMM yyyy')
+}
+
+/** Stable YYYY-MM key for bucketing by month. */
+export function monthKey(value: string | Date): string {
+  return format(toDate(value), 'yyyy-MM')
+}
+
+/**
+ * Group items into month buckets, newest first.
+ *
+ * Buckets are keyed and sorted on YYYY-MM rather than on the heading, because
+ * "August" sorts before "July" and a list that ordered itself alphabetically
+ * would look almost right, which is the worst way to be wrong.
+ */
+export function groupByMonth<T>(
+  items: T[],
+  getDate: (item: T) => string,
+): Array<{ key: string; label: string; items: T[] }> {
+  const buckets = new Map<string, T[]>()
+  for (const item of items) {
+    const key = monthKey(getDate(item))
+    const bucket = buckets.get(key)
+    if (bucket) bucket.push(item)
+    else buckets.set(key, [item])
+  }
+  return [...buckets.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([key, bucketItems]) => ({
+      key,
+      label: formatMonthHeading(getDate(bucketItems[0])),
+      items: bucketItems,
+    }))
+}
+
+/**
  * Group items into day buckets, newest first, for timeline-style lists.
  */
 export function groupByDay<T>(items: T[], getDate: (item: T) => string): Array<{

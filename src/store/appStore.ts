@@ -262,6 +262,9 @@ export const useAppStore = create<AppState>()((set, get) => {
         splitMethod: input.splitMethod,
         category: input.category,
         note: input.note,
+        // An expense can be moved in time after the fact: it is almost never
+        // logged when it happened. `updatedAt` still records the edit itself.
+        createdAt: input.createdAt ?? existing.createdAt,
         updatedAt: new Date().toISOString(),
       }
       commit({ expenses: get().expenses.map((e) => (e.id === id ? updated : e)) })

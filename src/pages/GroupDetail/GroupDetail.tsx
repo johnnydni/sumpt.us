@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { BarChart3, ImagePlus, MoreHorizontal, Plus, Trash2, UserPlus } from 'lucide-react'
+import { BarChart3, ImagePlus, MoreHorizontal, Plus, Share2, Trash2, UserPlus } from 'lucide-react'
 import type { Debt } from '@/types'
 import { useAppStore } from '@/store/appStore'
 import { usePeople } from '@/hooks/usePeople'
@@ -9,6 +9,7 @@ import { useGroup, useGroupLedger } from '@/hooks/useLedger'
 import { PageHeader } from '@/components/navigation/PageHeader'
 import { BalanceRow } from '@/components/balance/BalanceRow'
 import { ExpenseRow } from '@/components/expenses/ExpenseRow'
+import { groupByMonth } from '@/lib/dates'
 import { AnimatedMoney } from '@/components/balance/AnimatedMoney'
 import { DebtRow } from '@/components/settlements/DebtRow'
 import { SettleSheet } from '@/components/settlements/SettleSheet'
@@ -42,6 +43,11 @@ export default function GroupDetail() {
 
   const settled = ledger.balances.every((b) => b.netMinor === 0)
 
+  const months = useMemo(
+    () => groupByMonth(ledger.expenses, (expense) => expense.createdAt),
+    [ledger.expenses],
+  )
+
   const nonMembers = useMemo(
     () => friends.filter((f) => !ledger.memberIds.includes(f.id)),
     [friends, ledger.memberIds],
@@ -64,19 +70,53 @@ export default function GroupDetail() {
     toast.confirm('Settled')
   }
 
+  /**
+   * Hand the group's address to whatever the device offers, and fall back to
+   * the clipboard where it offers nothing.
+   *
+   * The link is a deep link, not yet an invitation: it opens the group on a
+   * device that already has it. It becomes a real invite when groups live on a
+   * server — the sharing gesture is the part that can exist now.
+   */
+  const shareGroup = async () => {
+    const url = `${window.location.origin}${import.meta.env.BASE_URL}groups/${group.id}`
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: group.name, url })
+        return
+      }
+      await navigator.clipboard.writeText(url)
+      toast.confirm('Link copied')
+    } catch (cause) {
+      // A cancelled share sheet rejects too, and telling someone their own
+      // cancellation failed is worse than saying nothing.
+      if (cause instanceof DOMException && cause.name === 'AbortError') return
+      toast.confirm('Could not share that link')
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title={group.name}
         backTo="/groups"
         action={
-          <button
-            onClick={() => setMenuOpen(true)}
-            aria-label="Group options"
-            className="flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink"
-          >
-            <MoreHorizontal size={20} strokeWidth={1.75} />
-          </button>
+          <div className="flex items-center">
+            <button
+              onClick={shareGroup}
+              aria-label="Share a link to this group"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <Share2 size={19} strokeWidth={1.75} />
+            </button>
+            <button
+              onClick={() => setMenuOpen(true)}
+              aria-label="Group options"
+              className="flex h-11 w-11 items-center justify-center rounded-md text-muted transition-colors hover:bg-surface hover:text-ink"
+            >
+              <MoreHorizontal size={20} strokeWidth={1.75} />
+            </button>
+          </div>
         }
       />
 
@@ -101,19 +141,37 @@ export default function GroupDetail() {
           {pluralize(ledger.expenses.length, 'expense')}
         </p>
 
-        <div className="mt-7 flex flex-wrap gap-2">
-          <Button asChild>
+        {/*
+          Two rows on purpose. The three labelled buttons want 335px and the
+          card gives 308, and a wrapped third button reads as a mistake — so
+          the primary action takes a row of its own and the two secondary ones
+          share the next, which keeps every label and reads as a hierarchy.
+        */}
+        <div className="mt-7 space-y-2">
+          <Button asChild className="w-full">
             <Link to={`/expenses/new?group=${group.id}`}>
               <Plus size={16} strokeWidth={2} />
               Add expense
             </Link>
           </Button>
-          <Button variant="outline" asChild>
-            <Link to={`/groups/${group.id}/stats`}>
-              <BarChart3 size={16} strokeWidth={1.75} />
-              Statistics
-            </Link>
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button variant="outline" asChild className="w-full">
+              <Link to={`/groups/${group.id}/stats`}>
+                <BarChart3 size={16} strokeWidth={1.75} />
+                Statistics
+              </Link>
+            </Button>
+            {/* Adding people was only reachable through the overflow menu,
+                which is where things go to be forgotten. */}
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setAddPeopleOpen(true)}
+            >
+              <UserPlus size={16} strokeWidth={1.75} />
+              Add people
+            </Button>
+          </div>
         </div>
         </div>
       </section>
@@ -193,29 +251,39 @@ export default function GroupDetail() {
             }
           />
         ) : (
-          <List className="border-t border-line">
-            <AnimatePresence initial={false}>
-              {ledger.expenses.map((expense) => (
-                <motion.div
-                  key={expense.id}
-                  layout={reduced ? false : 'position'}
-                  initial={reduced ? false : { opacity: 0, y: -8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={reduced ? { opacity: 0 } : { opacity: 0, x: -12 }}
-                  transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                >
-                  <ExpenseRow
-                    expense={expense}
-                    subtitle={`Paid by ${people.short(expense.paidBy)} · ${pluralize(
-                      expense.participants.length,
-                      'person',
-                      'people',
-                    )}`}
-                  />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </List>
+          /* Segmented by month once there is more than one, so a long trip
+             reads as a trip rather than as one undifferentiated column. */
+          months.map((month) => (
+            <div key={month.key} className={months.length > 1 ? 'mt-5 first:mt-0' : undefined}>
+              {months.length > 1 && (
+                <p className="eyebrow border-t border-line pt-3">{month.label}</p>
+              )}
+              <List className={months.length > 1 ? undefined : 'border-t border-line'}>
+                <AnimatePresence initial={false}>
+                  {month.items.map((expense) => (
+                    <motion.div
+                      key={expense.id}
+                      layout={reduced ? false : 'position'}
+                      initial={reduced ? false : { opacity: 0, y: -8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={reduced ? { opacity: 0 } : { opacity: 0, x: -12 }}
+                      transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    >
+                      <ExpenseRow
+                        showDate
+                        expense={expense}
+                        subtitle={`Paid by ${people.short(expense.paidBy)} · ${pluralize(
+                          expense.participants.length,
+                          'person',
+                          'people',
+                        )}`}
+                      />
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </List>
+            </div>
+          ))
         )}
       </section>
 

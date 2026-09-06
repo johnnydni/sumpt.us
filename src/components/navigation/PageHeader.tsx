@@ -7,6 +7,8 @@ interface PageHeaderProps {
   /** Where back goes when there is no history to pop. */
   backTo?: string
   eyebrow?: string
+  /** A count or qualifier set quietly beside the title, e.g. "1/2". */
+  titleSuffix?: string
   action?: React.ReactNode
   className?: string
   /** Display type for editorial screens; plain weight for utilitarian ones. */
@@ -17,6 +19,7 @@ export function PageHeader({
   title,
   backTo,
   eyebrow,
+  titleSuffix,
   action,
   className,
   display = true,
@@ -45,11 +48,18 @@ export function PageHeader({
         {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
         <h1
           className={cn(
-            'truncate',
+            'flex items-baseline gap-2 truncate',
             display ? 'display text-[26px] leading-tight' : 'text-xl font-semibold tracking-tight',
           )}
         >
-          {title}
+          <span className="truncate">{title}</span>
+          {/* Subordinate to the title: it qualifies the heading rather than
+              being part of it, so it is smaller and quieter. */}
+          {titleSuffix && (
+            <span className="tnum shrink-0 text-[17px] font-normal text-muted">
+              ({titleSuffix})
+            </span>
+          )}
         </h1>
       </div>
 
