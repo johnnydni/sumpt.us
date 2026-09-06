@@ -415,10 +415,14 @@ function Equation({ phase }: { phase: Phase }) {
 function Layer({ show, children, y = 0 }: { show: boolean; children: React.ReactNode; y?: number }) {
   return (
     <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap">
+      {/* The initial state has to know whether this scene is the one starting,
+          or the whole stack flashes for a frame and then fades apart. The
+          outgoing layer also clears before the next arrives: two money figures
+          crossing at the same spot read as a smear, not a transition. */}
       <motion.div
-        initial={{ opacity: 1 }}
+        initial={{ opacity: show ? 1 : 0 }}
         animate={{ opacity: show ? 1 : 0, y: show ? 0 : `${y - 0.2}em` }}
-        transition={{ duration: s(170), ease: EASE }}
+        transition={{ duration: s(show ? 150 : 120), delay: show ? s(70) : 0, ease: EASE }}
       >
         {children}
       </motion.div>
