@@ -10,14 +10,15 @@ interface MoneyOptions {
 
 const formatterCache = new Map<string, Intl.NumberFormat>()
 
-function formatter(code: CurrencyCode): Intl.NumberFormat {
-  const key = code
+function formatter(code: CurrencyCode, minIntegerDigits = 1): Intl.NumberFormat {
+  const key = `${code}:${minIntegerDigits}`
   let f = formatterCache.get(key)
   if (!f) {
     const decimals = getCurrency(code).decimals
     f = new Intl.NumberFormat('en-GB', {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
+      minimumIntegerDigits: minIntegerDigits,
     })
     formatterCache.set(key, f)
   }
@@ -42,6 +43,36 @@ export function formatMoney(
   if (minor < 0) return `−${amount}`
   if (signed && minor > 0) return `+${amount}`
   return amount
+}
+
+/** One rendered character of an amount, and whether it is a digit. */
+export interface MoneyGlyph {
+  char: string
+  digit: boolean
+}
+
+/**
+ * The same figure, split into the characters it is drawn with.
+ *
+ * For type that has to be addressed piece by piece — a counter whose digits
+ * are animated individually, say. `minIntegerDigits` pads the major part, which
+ * is what stops a running total from changing width as it passes ten.
+ *
+ * The currency symbol stays one glyph even where it is several letters, since
+ * nothing useful can be done with half of "CHF".
+ */
+export function moneyGlyphs(
+  minor: number,
+  code: CurrencyCode,
+  minIntegerDigits = 1,
+): MoneyGlyph[] {
+  const currency = getCurrency(code)
+  const magnitude = Math.abs(minor) / minorFactor(code)
+  const body = formatter(code, minIntegerDigits).format(magnitude)
+  return [
+    { char: currency.symbol, digit: false },
+    ...[...body].map((char) => ({ char, digit: char >= '0' && char <= '9' })),
+  ]
 }
 
 /** "+ €42.50" style, with a hair space after the sign for editorial spacing. */

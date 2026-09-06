@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { motion } from 'motion/react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { animate, motion, useMotionValue } from 'motion/react'
 import { Mark, MARK_ASPECT } from '@/components/brand/Mark'
 import { GAP, MARK_HEIGHT, TEXT_ASPECT, WordmarkText } from '@/components/brand/Wordmark'
 import { allocate } from '@/lib/calculations'
-import { formatMoney } from '@/lib/formatting'
+import { formatMoney, moneyGlyphs } from '@/lib/formatting'
 import { useAppStore } from '@/store/appStore'
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 import type { Preferences } from '@/types'
@@ -59,16 +59,24 @@ const SEED = { x: 0.45, y: 0.5 } as const
 
 const PACE = 2
 const T = {
-  sum: 500,
-  divide: 750,
-  share: 950,
-  form: 1100,
-  settled: 1350,
-  clear: 1500,
-  wordmark: 1650,
-  hold: 1850,
-  done: 2100,
+  sum: 460,
+  divide: 700,
+  share: 880,
+  paid: 1060,
+  count: 1440,
+  points: 1880,
+  form: 2040,
+  wordmark: 2330,
+  hold: 2530,
+  done: 2760,
 } as const
+
+/** Between one payer landing and the next. */
+const PAYER_STAGGER = 85
+/** How long the balance takes to run down once everyone has paid. */
+const COUNT_MS = 400
+/** Two integer digits, so the counter keeps its width — and zero draws four. */
+const COUNTER_DIGITS = 2
 
 const ms = (value: number) => value * PACE
 const s = (value: number) => (value * PACE) / 1000
@@ -82,9 +90,10 @@ const PHASES = [
   ['sum', T.sum],
   ['divide', T.divide],
   ['share', T.share],
+  ['paid', T.paid],
+  ['count', T.count],
+  ['points', T.points],
   ['form', T.form],
-  ['settled', T.settled],
-  ['clear', T.clear],
   ['wordmark', T.wordmark],
   ['hold', T.hold],
 ] as const
@@ -134,9 +143,30 @@ function place(circle: { x: number; y: number; r: number }) {
   }
 }
 
-const TARGETS = [place(CIRCLES.dot), place(CIRCLES.holeTop), place(CIRCLES.holeBot)]
 /** The fourth point seeds the curve and is swallowed by it. */
 const SEED_TARGET = { x: (SEED.x - 0.5) * HERO_W, y: 0, d: 0.1 }
+
+/**
+ * Left to right, so the four zeros travel without crossing: the leftmost zero
+ * takes the leftmost circle. Anything else reads as a shuffle.
+ */
+const TARGETS = [
+  place(CIRCLES.dot),
+  SEED_TARGET,
+  place(CIRCLES.holeTop),
+  place(CIRCLES.holeBot),
+]
+
+/** Where a glyph stands before it stops being type, in stage em. */
+interface Seat {
+  x: number
+  y: number
+  d: number
+}
+
+/** The counter's glyphs, and which of them are the digits worth addressing. */
+const GLYPHS = moneyGlyphs(SHARE, 'EUR', COUNTER_DIGITS)
+const DIGIT_INDICES = GLYPHS.flatMap((glyph, index) => (glyph.digit ? [index] : []))
 
 /**
  * When the spreading ink reaches a given circle, as a fraction of the sweep.
@@ -287,14 +317,44 @@ function StaticLockup() {
 
 function Equation({ phase }: { phase: Phase }) {
   const summing = !at('divide', phase)
-  const dividing = at('divide', phase) && !at('form', phase)
+  const dividing = at('divide', phase) && !at('points', phase)
   const forming = at('form', phase)
   const lockup = at('wordmark', phase)
+
+  const stageRef = useRef<HTMLDivElement>(null)
+  const digitsRef = useRef<(HTMLSpanElement | null)[]>([])
+  const [seats, setSeats] = useState<Seat[] | null>(null)
+
+  /*
+   * Where the four zeros stand, read the frame they stop being type and start
+   * being points. Measured rather than laid out by hand: the glyph advance
+   * belongs to the typeface, and a number copied out of it here would be wrong
+   * the first time anyone changes the face or the size.
+   */
+  useLayoutEffect(() => {
+    if (seats || !at('points', phase)) return
+    const stage = stageRef.current
+    if (!stage) return
+    const origin = stage.getBoundingClientRect()
+    const em = parseFloat(getComputedStyle(stage).fontSize) || 1
+    const measured = digitsRef.current.slice(0, HEADS).map((node) => {
+      if (!node) return null
+      const box = node.getBoundingClientRect()
+      return {
+        x: (box.left + box.width / 2 - origin.left) / em,
+        y: (box.top + box.height / 2 - origin.top) / em,
+        // A zero is taller than it is wide; the point that replaces it should
+        // read as the same mass, not the same box.
+        d: (box.width * 0.74) / em,
+      }
+    })
+    if (measured.every((seat): seat is Seat => seat !== null)) setSeats(measured)
+  }, [phase, seats])
 
   return (
     /* A zero-sized stage: every layer is positioned against its centre, and a
        box with any width at all would put the lockup half a pixel off it. */
-    <div className="relative" style={{ fontSize: FONT, width: 0, height: 0 }}>
+    <div ref={stageRef} className="relative" style={{ fontSize: FONT, width: 0, height: 0 }}>
       {/* Scene 1–2: the expenses, and their sum. */}
       <Layer show={summing} y={at('sum', phase) ? -0.28 : 0}>
         <div className="tnum display" style={{ fontSize: '0.6em', lineHeight: 1.34 }}>
@@ -329,7 +389,7 @@ function Equation({ phase }: { phase: Phase }) {
         </div>
       </Layer>
 
-      {/* Scene 3: the total, divided. */}
+      {/* Scene 3–5: the total divided, everyone paying, the balance run down. */}
       <Layer show={dividing}>
         <div
           className="tnum display flex flex-col items-center"
@@ -343,7 +403,6 @@ function Equation({ phase }: { phase: Phase }) {
             {formatMoney(TOTAL, 'EUR')}
           </motion.span>
           <motion.span
-            className="opacity-55"
             initial={{ opacity: 0 }}
             animate={{ opacity: at('share', phase) ? 0 : 0.55 }}
             transition={{ delay: s(60), duration: s(140), ease: EASE }}
@@ -358,35 +417,34 @@ function Equation({ phase }: { phase: Phase }) {
             {HEADS}
           </motion.span>
           <Rule show={at('share', phase)} />
+
+          {/*
+            The payers sit outside the flow on purpose. In it, they would set
+            the column's width and stretch the division rule above them to the
+            span of four icons, which is not what the rule divides.
+          */}
           <motion.span
+            className="relative"
             initial={{ opacity: 0 }}
             animate={{ opacity: at('share', phase) ? 1 : 0 }}
             transition={{ delay: s(60), duration: s(150), ease: EASE }}
           >
-            {formatMoney(SHARE, 'EUR')}
+            <Payers side="left" shown={at('paid', phase)} hidden={at('points', phase)} />
+            <Counter
+              running={at('count', phase)}
+              hidden={at('points', phase)}
+              digitsRef={digitsRef}
+            />
+            <Payers side="right" shown={at('paid', phase)} hidden={at('points', phase)} />
           </motion.span>
         </div>
       </Layer>
 
-      {/* Scene 4: the four points find the artwork, and the ink spreads. */}
-      <Points forming={forming} />
+      {/* Scene 6: the zeros, become points, become the artwork. */}
+      <Points seats={seats} forming={forming} />
       <MarkForm forming={forming} lockup={lockup} />
 
-      {/* Scene 5: settled. */}
-      <div
-        className="tnum display absolute left-1/2 -translate-x-1/2 whitespace-nowrap text-center"
-        style={{ fontSize: '0.5em', top: `${(HERO / 2 + 0.42) / 0.5}em` }}
-      >
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: at('settled', phase) && !at('clear', phase) ? 0.75 : 0 }}
-          transition={{ duration: s(140), ease: EASE }}
-        >
-          = {formatMoney(0, 'EUR')}
-        </motion.div>
-      </div>
-
-      {/* Scene 6: the lettering, revealed rather than rebuilt. */}
+      {/* Scene 7: the lettering, revealed rather than rebuilt. */}
       <div
         className="absolute top-1/2 -translate-y-1/2"
         style={{ right: `${LOCKUP_W / 2 - TEXT_ASPECT}em` }}
@@ -403,6 +461,125 @@ function Equation({ phase }: { phase: Phase }) {
         </motion.div>
       </div>
     </div>
+  )
+}
+
+/**
+ * The balance, running down to nothing.
+ *
+ * Each glyph is its own element so the four zeros can be found and measured
+ * when they become points, and the text is written straight to the DOM rather
+ * than through state: a counter that re-rendered React sixty times a second
+ * would be the one expensive thing on the launch path.
+ */
+function Counter({
+  running,
+  hidden,
+  digitsRef,
+}: {
+  running: boolean
+  hidden: boolean
+  digitsRef: { current: (HTMLSpanElement | null)[] }
+}) {
+  const value = useMotionValue(SHARE)
+  const glyphs = useRef<(HTMLSpanElement | null)[]>([])
+
+  useEffect(
+    () =>
+      value.on('change', (current) => {
+        const next = moneyGlyphs(Math.round(current), 'EUR', COUNTER_DIGITS)
+        next.forEach((glyph, index) => {
+          const node = glyphs.current[index]
+          if (node && node.textContent !== glyph.char) node.textContent = glyph.char
+        })
+      }),
+    [value],
+  )
+
+  useEffect(() => {
+    if (!running) return
+    const controls = animate(value, 0, { duration: s(COUNT_MS), ease: EASE })
+    return () => controls.stop()
+  }, [running, value])
+
+  return (
+    <motion.span
+      className="inline-flex"
+      animate={{ opacity: hidden ? 0 : 1 }}
+      transition={{ duration: s(90), ease: EASE }}
+    >
+      {GLYPHS.map((glyph, index) => (
+        <span
+          key={index}
+          ref={(node) => {
+            glyphs.current[index] = node
+            const seat = DIGIT_INDICES.indexOf(index)
+            if (seat >= 0) digitsRef.current[seat] = node
+          }}
+        >
+          {glyph.char}
+        </span>
+      ))}
+    </motion.span>
+  )
+}
+
+/** Two of the four people who owed, landing one after another once settled. */
+function Payers({
+  side,
+  shown,
+  hidden,
+}: {
+  side: 'left' | 'right'
+  shown: boolean
+  hidden: boolean
+}) {
+  const seats = side === 'left' ? [0, 1] : [2, 3]
+  return (
+    <span
+      className={`absolute top-1/2 flex -translate-y-1/2 gap-[0.34em] ${
+        side === 'left' ? 'right-full mr-[0.46em]' : 'left-full ml-[0.46em]'
+      }`}
+    >
+      {seats.map((seat) => (
+        <motion.span
+          key={seat}
+          className="flex text-positive"
+          initial={{ opacity: 0, scale: 0.5 }}
+          animate={
+            hidden
+              ? { opacity: 0, scale: 1 }
+              : shown
+                ? { opacity: 1, scale: 1 }
+                : { opacity: 0, scale: 0.5 }
+          }
+          transition={{
+            duration: s(hidden ? 90 : 150),
+            delay: hidden ? 0 : s(seat * PAYER_STAGGER),
+            ease: SETTLE,
+          }}
+        >
+          <PayerIcon />
+        </motion.span>
+      ))}
+    </span>
+  )
+}
+
+/** Someone who has paid: a figure, and the tick that settles them. */
+function PayerIcon() {
+  return (
+    <svg viewBox="0 0 30 24" className="h-[0.78em] w-auto" fill="none" aria-hidden="true">
+      <circle cx="8" cy="6.2" r="4" fill="currentColor" />
+      <path d="M1.6 20.8a6.4 6.4 0 0 1 12.8 0z" fill="currentColor" />
+      <path
+        d="m18.6 13.9 3.3 3.3 6.5-7.7"
+        stroke="currentColor"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   )
 }
 
@@ -451,20 +628,22 @@ function Rule({ show }: { show: boolean }) {
  * its position, so the two standing in for the cutouts neither leave a gap nor
  * show through the negative space.
  */
-function Points({ forming }: { forming: boolean }) {
-  const points = [...TARGETS, SEED_TARGET]
+function Points({ seats, forming }: { seats: Seat[] | null; forming: boolean }) {
+  if (!seats) return null
   return (
     <>
-      {points.map((target, index) => {
+      {TARGETS.map((target, index) => {
+        const seat = seats[index]
         // A shade before the ink lands: a beat late would show a black dot
         // through a white cutout, and that is the one frame nobody forgives.
         const hidesAt = Math.min(reached(target) * 0.95, 0.9)
+        const home = { x: `${seat.x}em`, y: `${seat.y}em`, scale: seat.d }
         return (
           <motion.span
             key={index}
             className="absolute left-1/2 top-1/2 rounded-full bg-current"
             style={{ marginLeft: '-0.5em', marginTop: '-0.5em', width: '1em', height: '1em' }}
-            initial={{ opacity: 0, scale: 0.12, x: 0, y: '0.34em' }}
+            initial={{ opacity: 0, ...home }}
             animate={
               forming
                 ? {
@@ -473,13 +652,17 @@ function Points({ forming }: { forming: boolean }) {
                     x: `${target.x}em`,
                     y: `${target.y}em`,
                   }
-                : { opacity: 0, scale: 0.12, x: 0, y: '0.34em' }
+                : { opacity: 1, ...home }
             }
-            transition={{
-              duration: s(240),
-              ease: SETTLE,
-              opacity: { duration: s(240), times: [0, hidesAt, 1], ease: EASE },
-            }}
+            transition={
+              forming
+                ? {
+                    duration: s(240),
+                    ease: SETTLE,
+                    opacity: { duration: s(240), times: [0, hidesAt, 1], ease: EASE },
+                  }
+                : { duration: s(90), ease: EASE }
+            }
           />
         )
       })}
