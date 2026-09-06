@@ -1,7 +1,7 @@
 import type { CurrencyCode } from '@/types'
 
 /**
- * The sumpt.us plans, as one source of truth.
+ * The sumptus plans, as one source of truth.
  *
  * Prices follow the same rule as every other amount in this app: integer minor
  * units, formatted only at the edge. They are quoted in euros regardless of the
@@ -59,11 +59,11 @@ export const FREE_PLAN: Plan = {
  * which most people will never open and nobody should have to scroll past.
  */
 export const PAY_ONCE_SUMMARY =
-  'These plans carry features that allow you to use sumpt.us forever in its core: managing and settling shared expenses.'
+  'These plans carry features that allow you to use sumptus forever in its core: managing and settling shared expenses.'
 
 export const PAY_ONCE_REASONING = [
   'The reason why we designed these plans in this way, is simple.',
-  'We want to allow users that need just that, be able to purchase sumpt.us once and use it as they please.',
+  'We want to allow users that need just that, be able to purchase sumptus once and use it as they please.',
   "Of course you'll still receive the newest social and security features as well.",
   'This makes the permanent plan honest in our opinion.',
   'If you want to support us in the continuous development of cool, new and useful features, consider the Pro plan.',

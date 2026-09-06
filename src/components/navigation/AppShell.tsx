@@ -20,7 +20,7 @@ export function AppShell() {
       <div className="shell pt-6 sm:pt-8">
         <Link
           to="/overview"
-          aria-label="sumpt.us — go to overview"
+          aria-label="sumptus — go to overview"
           className="inline-flex rounded-sm text-ink transition-opacity duration-micro hover:opacity-60"
         >
           <Wordmark className="text-[17px]" />

@@ -2,7 +2,7 @@ import { Mark, MARK_ASPECT } from '@/components/brand/Mark'
 import { cn } from '@/lib/cn'
 
 /** Intrinsic aspect of public/brand/wordmark.png, from scripts/build-wordmark.mjs. */
-export const TEXT_ASPECT = 668 / 151
+export const TEXT_ASPECT = 633 / 151
 
 /**
  * Space between the lettering and the mark, in em. The original artwork set it
@@ -25,7 +25,7 @@ interface WordmarkProps {
 }
 
 /**
- * The sumpt.us lockup: the lettering, then the mark.
+ * The sumptus lockup: the lettering, then the mark.
  *
  * The two are separate assets composed here rather than one baked bitmap, so
  * the mark can also stand alone — as an icon, an avatar, a favicon — and its
@@ -39,7 +39,7 @@ export function Wordmark({ className }: WordmarkProps) {
   return (
     <span
       role="img"
-      aria-label="sumpt.us"
+      aria-label="sumptus"
       className={cn('inline-flex shrink-0 items-center align-middle', className)}
       style={{ gap: `${GAP}em` }}
     >

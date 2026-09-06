@@ -101,7 +101,7 @@ export default function Friends() {
         open={addOpen}
         onOpenChange={setAddOpen}
         title="Add friend"
-        description="Just a name — sumpt.us works entirely on this device for now."
+        description="Just a name — sumptus works entirely on this device for now."
         footer={
           <Button full size="lg" onClick={create} disabled={!name.trim()}>
             Add friend

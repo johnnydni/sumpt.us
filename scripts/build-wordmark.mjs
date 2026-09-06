@@ -186,21 +186,84 @@ function outHeightGuess(b, t) {
   return b - t + 1
 }
 
-const outWidth = right - left + 1
+const lettersWidth = right - left + 1
 const outHeight = bottom - top + 1
+const inked = (x, y) => ink[(y + top) * width + (x + left)] > 8
+
+/**
+ * Every glyph, as a run of inked columns.
+ *
+ * The face sets its own letterfit, so the spacing that looks right is the
+ * spacing already in the artwork. Reading it back out is the only way to
+ * change the word without inventing a rhythm of our own.
+ */
+const glyphs = []
+for (let x = 0, start = -1; x <= lettersWidth; x += 1) {
+  let hit = false
+  for (let y = 0; y < outHeight && !hit; y += 1) if (inked(x, y)) hit = true
+  if (hit && start < 0) start = x
+  if ((!hit || x === lettersWidth) && start >= 0) {
+    glyphs.push({ start, end: x - 1 })
+    start = -1
+  }
+}
+
+/**
+ * The name lost its full stop: sumpt.us became sumptus.
+ *
+ * The period is the one glyph that is both narrow and sitting on the baseline
+ * rather than reaching up into the x-height — no letter here does both. Found
+ * that way rather than by column number, so re-running this against a
+ * re-exported source still finds it.
+ */
+const widths = glyphs.map((g) => g.end - g.start + 1).sort((a, b) => a - b)
+const medianWidth = widths[widths.length >> 1]
+const period = glyphs.findIndex((glyph) => {
+  if (glyph.end - glyph.start + 1 > medianWidth * 0.5) return false
+  let highest = outHeight
+  for (let y = 0; y < outHeight; y += 1) {
+    for (let x = glyph.start; x <= glyph.end; x += 1) {
+      if (inked(x, y)) {
+        highest = Math.min(highest, y)
+        break
+      }
+    }
+  }
+  return highest > outHeight * 0.55
+})
+if (period <= 0 || period >= glyphs.length - 1) {
+  throw new Error('no full stop found between two letters — has the artwork changed?')
+}
+
+// The gap to close it with is the one the other letters already use. The two
+// gaps flanking the period are excluded: punctuation is set looser than type.
+const gaps = glyphs
+  .slice(1)
+  .map((glyph, index) => ({ gap: glyph.start - glyphs[index].end - 1, index }))
+  .filter(({ index }) => index !== period - 1 && index !== period)
+  .map(({ gap }) => gap)
+  .sort((a, b) => a - b)
+const letterGap = gaps[gaps.length >> 1]
+
+const cutFrom = glyphs[period - 1].end + 1 + letterGap
+const cutTo = glyphs[period + 1].start
+const outWidth = lettersWidth - (cutTo - cutFrom)
+
 const out = Buffer.alloc(outWidth * outHeight * 2)
 for (let y = 0; y < outHeight; y += 1) {
   for (let x = 0; x < outWidth; x += 1) {
-    const alpha = ink[(y + top) * width + (x + left)]
+    const source = x < cutFrom ? x : x + (cutTo - cutFrom)
     const o = (y * outWidth + x) * 2
     out[o] = 0 // grey value is irrelevant under a mask; keep it black
-    out[o + 1] = alpha
+    out[o + 1] = ink[(y + top) * width + (source + left)]
   }
 }
 
 mkdirSync(dirname(OUTPUT), { recursive: true })
 writeFileSync(OUTPUT, encodeGreyAlpha(outWidth, outHeight, out))
 
-console.log(`source  ${width}×${height}`)
-console.log(`trimmed ${outWidth}×${outHeight}  (aspect ${(outWidth / outHeight).toFixed(4)})`)
+console.log(`source   ${width}×${height}`)
+console.log(`glyphs   ${glyphs.length}, full stop at index ${period}, letter gap ${letterGap}px`)
+console.log(`closed   ${cutTo - cutFrom}px removed between "t" and "u"`)
+console.log(`trimmed  ${outWidth}×${outHeight}  (aspect ${(outWidth / outHeight).toFixed(4)})`)
 console.log(`wrote   public/brand/wordmark.png`)

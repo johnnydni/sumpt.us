@@ -1,5 +1,5 @@
 /**
- * sumpt.us domain model.
+ * sumptus domain model.
  *
  * Money rule: every monetary value in this app is an integer in the currency's
  * minor unit (EUR cents, JPY yen). Nothing here ever holds a float or a
@@ -29,7 +29,7 @@ export interface Category {
   label: string
   /** Lucide icon name, resolved in components/expenses/CategoryIcon. */
   icon: string
-  /** Chart series colour, drawn from the sumpt.us accent palette. */
+  /** Chart series colour, drawn from the sumptus accent palette. */
   color: string
 }
 

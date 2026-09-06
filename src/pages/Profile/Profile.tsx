@@ -154,7 +154,7 @@ export default function Profile() {
             description={
               preferences.reduceMotion
                 ? 'Held back while Reduce motion is on.'
-                : 'Plays the sumpt.us clip when the app starts cold.'
+                : 'Plays the sumptus clip when the app starts cold.'
             }
             checked={preferences.playIntro}
             onChange={(checked) => setPreferences({ playIntro: checked })}
@@ -216,7 +216,7 @@ export default function Profile() {
               toast.notice(
                 session
                   ? 'Only groups you share leave this device, and only to the people in them.'
-                  : 'sumpt.us sends nothing anywhere. No accounts, no servers.',
+                  : 'sumptus sends nothing anywhere. No accounts, no servers.',
               )
             }
           />
@@ -252,7 +252,7 @@ export default function Profile() {
           )}
         </div>
         <p className="mt-3 max-w-prose text-[13px] leading-relaxed text-muted">
-          sumpt.us keeps all of this in your browser&rsquo;s local storage. Clearing site data
+          sumptus keeps all of this in your browser&rsquo;s local storage. Clearing site data
           removes it permanently, so export first if it matters.
         </p>
       </section>

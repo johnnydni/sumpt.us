@@ -1,4 +1,4 @@
-# sumpt.us
+# sumptus
 
 **Shared expenses. Simply.**
 

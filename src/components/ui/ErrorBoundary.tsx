@@ -25,7 +25,7 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Keep the real stack in the console; the UI stays calm.
-    console.error('sumpt.us crashed:', error, info.componentStack)
+    console.error('sumptus crashed:', error, info.componentStack)
   }
 
   render() {

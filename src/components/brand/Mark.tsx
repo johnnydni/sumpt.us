@@ -10,7 +10,7 @@ interface MarkProps {
 }
 
 /**
- * The sumpt.us mark.
+ * The sumptus mark.
  *
  * Shipped as a CSS mask rather than a picture, so it is painted with
  * `currentColor` and works on white, on navy and on any accent without a

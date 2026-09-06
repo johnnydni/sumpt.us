@@ -16,7 +16,7 @@ import { allocateAcrossGroups } from '@/hooks/useLedger'
 import type { Debt, Expense, PersonBalance, Settlement } from '@/types'
 
 /**
- * These cover the only part of sumpt.us that can be wrong in a way the user
+ * These cover the only part of sumptus that can be wrong in a way the user
  * can't see: the money. Everything asserts on integers in minor units.
  */
 

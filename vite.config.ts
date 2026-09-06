@@ -16,9 +16,20 @@ import fs from 'node:fs'
  * The deploy workflow sets BASE_PATH explicitly; set it to "/" for a custom
  * domain, where the site is served from the root.
  */
+
+/**
+ * The GitHub repository name, which is what Pages puts in the URL.
+ *
+ * Not the product name — the app is called sumptus and the repository is not,
+ * yet. The deploy workflow reads the real name from GitHub, so this only backs
+ * a production build run by hand; change it when the repository is renamed and
+ * the local build will match the live one again.
+ */
+const REPO = 'sumpt.us'
+
 function resolveBase(command: 'serve' | 'build'): string {
   if (process.env.BASE_PATH) return process.env.BASE_PATH
-  return command === 'serve' ? '/' : '/sumpt.us/'
+  return command === 'serve' ? '/' : `/${REPO}/`
 }
 
 /**
@@ -50,8 +61,8 @@ export default defineConfig(({ command }) => {
       registerType: 'autoUpdate',
       includeAssets: ['icons/favicon.png', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'sumpt.us',
-        short_name: 'sumpt.us',
+        name: 'sumptus',
+        short_name: 'sumptus',
         description: 'Shared expenses. Simply.',
         start_url: base,
         scope: base,

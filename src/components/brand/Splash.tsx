@@ -299,7 +299,7 @@ function StaticLockup() {
   return (
     <span
       role="img"
-      aria-label="sumpt.us"
+      aria-label="sumptus"
       className="inline-flex items-center"
       style={{ gap: `${GAP}em` }}
     >
