@@ -53,10 +53,11 @@ const SEED = { x: 0.45, y: 0.5 } as const
  * Timing. Every number is milliseconds from the first frame.
  *
  * PACE scales the whole thing at once — the one knob worth having, because
- * legibility at this speed is a judgement call and not a code change.
+ * legibility is a judgement call and not a code change. At 2 the run is 4.2s,
+ * which is long for a cold start; the skip pill is what makes that bearable.
  * ------------------------------------------------------------------------- */
 
-const PACE = 1
+const PACE = 2
 const T = {
   sum: 500,
   divide: 750,
