@@ -56,6 +56,12 @@ export interface Plan {
  * their eleven euros, and without a way out that one person could hold a ticket
  * hostage forever. After a week the group can be closed by hand and the ticket
  * comes back, settled or not.
+ *
+ * What Free does not carry is Smart Settlement. Splitting stays complete here —
+ * every method, every balance — and what you pay for is the shortcut through
+ * settling, not the arithmetic itself. It is also the right thing to sell: it
+ * costs nothing to run, so it belongs in a plan you buy once rather than one
+ * that bills every month.
  */
 export const FREE_PLAN: Plan = {
   id: 'free',
@@ -69,10 +75,12 @@ export const FREE_PLAN: Plan = {
     'Still open after a week? Close it by hand and take the ticket back anyway',
     'Unlimited expenses, friends and history',
     'Every split method — equal, exact, percentage, shares',
-    'Smart Settlement: the fewest payments that clear the group',
+    'Every balance, and settling up by hand whenever you want',
     'Statistics and full data export',
     'Trips run for a set length, up to six months',
   ],
+  footnote:
+    'Smart Settlement — the fewest payments that clear a group — comes with Lifetime.',
 }
 
 /**
@@ -105,6 +113,7 @@ export const ONE_TIME_PLANS: Plan[] = [
     positioning: 'Pay once. Keep it for good.',
     inherits: 'Free',
     features: [
+      'Smart Settlement: the fewest payments that clear the group',
       'Scan receipts on your device and split them by line item',
       'Payment QR code and your payment links in one place',
       'Reminders on your schedule, in your own words',
