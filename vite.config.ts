@@ -71,7 +71,9 @@ export default defineConfig(({ command }) => {
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // The intro clip is precached too: a splash that has to be fetched is
+        // a splash that does not play on the first offline launch.
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2,mp4,webm}'],
         navigateFallback: `${base}index.html`,
         runtimeCaching: [
           {
