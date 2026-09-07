@@ -41,12 +41,21 @@ export function Field({ label, hint, error, children, className }: FieldProps) {
   )
 }
 
+/*
+ * 16px, not 15.
+ *
+ * Safari on iOS zooms the whole page into any field it considers too small to
+ * read, and the threshold is exactly 16px. The page then stays zoomed after
+ * the keyboard closes. The viewport meta could forbid it with
+ * `maximum-scale=1`, but that takes pinch-to-zoom away from everyone for the
+ * sake of one pixel — so the type is simply large enough to be left alone.
+ */
 export const Input = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
   ({ className, ...props }, ref) => (
     <input
       ref={ref}
       className={cn(
-        'h-12 w-full rounded-md border border-line bg-canvas px-3.5 text-[15px] text-ink',
+        'h-12 w-full rounded-md border border-line bg-canvas px-3.5 text-base text-ink',
         'placeholder:text-muted/70 transition-colors duration-micro',
         'focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15',
         'aria-[invalid=true]:border-negative aria-[invalid=true]:ring-negative/15',
@@ -65,7 +74,7 @@ export const Textarea = forwardRef<
   <textarea
     ref={ref}
     className={cn(
-      'min-h-[88px] w-full resize-none rounded-md border border-line bg-canvas px-3.5 py-3 text-[15px]',
+      'min-h-[88px] w-full resize-none rounded-md border border-line bg-canvas px-3.5 py-3 text-base',
       'placeholder:text-muted/70 focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15',
       className,
     )}

@@ -87,7 +87,7 @@ export default function Groups() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search groups"
             aria-label="Search groups"
-            className="h-11 w-full rounded-md border border-line bg-canvas pl-10 pr-3 text-[15px] placeholder:text-muted/70 focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
+            className="h-11 w-full rounded-md border border-line bg-canvas pl-10 pr-3 text-base placeholder:text-muted/70 focus:border-navy focus:outline-none focus:ring-2 focus:ring-navy/15"
           />
         </div>
       )}

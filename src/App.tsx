@@ -1,6 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
-import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Outlet, Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
 import { AppShell } from '@/components/navigation/AppShell'
 import { Splash } from '@/components/brand/Splash'
@@ -32,8 +32,21 @@ const SignIn = lazy(() => import('@/pages/SignIn/SignIn'))
 export default function App() {
   const hydrate = useAppStore((s) => s.hydrate)
   const hydrated = useAppStore((s) => s.hydrated)
-  const [splashPlayed, setSplashPlayed] = useState(false)
-  const endSplash = useCallback(() => setSplashPlayed(true), [])
+  /*
+   * Once per session, not once per page load.
+   *
+   * A standalone app on iOS gets reloaded out from under the user — the system
+   * reclaims it in the background, a gesture drops it out of the page cache —
+   * and replaying five seconds of brand animation on the way back is what
+   * makes that feel like the app restarting rather than resuming. sessionStorage
+   * is exactly the right lifetime: a genuine cold start gets the splash, a
+   * reload inside the same session does not.
+   */
+  const [splashPlayed, setSplashPlayed] = useState(playedThisSession)
+  const endSplash = useCallback(() => {
+    rememberSplash()
+    setSplashPlayed(true)
+  }, [])
 
   useEffect(() => {
     void hydrate()
@@ -100,14 +113,45 @@ function RequireOnboarding() {
   return <Outlet />
 }
 
+const SPLASH_KEY = 'sumptus.splash.session'
+
+/** Storage can throw outright in a private window, so nothing here may. */
+function playedThisSession(): boolean {
+  try {
+    return sessionStorage.getItem(SPLASH_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function rememberSplash() {
+  try {
+    sessionStorage.setItem(SPLASH_KEY, '1')
+  } catch {
+    /* A splash that replays is a smaller problem than one that throws. */
+  }
+}
+
 function RouteFallback() {
   return <div className="shell pt-16" aria-busy="true" />
 }
 
+/**
+ * A new screen starts at the top. A screen you came back to does not.
+ *
+ * The browser already restores the scroll position of a history entry it pops,
+ * and it does it before this effect runs — so firing on a POP is a visible
+ * jump to the top of a list you had scrolled halfway down, immediately after
+ * the back gesture put you back exactly where you were.
+ */
 function ScrollToTop() {
   const { pathname } = useLocation()
+  const navigationType = useNavigationType()
+
   useEffect(() => {
+    if (navigationType === 'POP') return
     window.scrollTo({ top: 0, behavior: 'auto' })
-  }, [pathname])
+  }, [pathname, navigationType])
+
   return null
 }
