@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { AnimatePresence } from 'motion/react'
 import { Navigate, Outlet, Route, Routes, useLocation, useNavigationType } from 'react-router-dom'
 import { useAppStore } from '@/store/appStore'
@@ -63,7 +63,7 @@ export default function App() {
 
       {hydrated && (
         <>
-          <ScrollToTop />
+          <ScrollMemory />
           <ErrorBoundary>
             <Suspense fallback={<RouteFallback />}>
               <Routes>
@@ -137,21 +137,111 @@ function RouteFallback() {
 }
 
 /**
- * A new screen starts at the top. A screen you came back to does not.
+ * A new screen starts at the top. A screen you return to does not.
  *
- * The browser already restores the scroll position of a history entry it pops,
- * and it does it before this effect runs — so firing on a POP is a visible
- * jump to the top of a list you had scrolled halfway down, immediately after
- * the back gesture put you back exactly where you were.
+ * This has to survive a reload, not just a history pop. On iOS a home-screen
+ * app is reloaded out from under the user — a back gesture, the system
+ * reclaiming memory — and the browser's own restoration cannot help there,
+ * because it runs long before React has rendered anything to scroll. Coming
+ * back to the top of a list you were halfway down is most of what makes a
+ * reload feel like a reload, so the position is kept per URL for the session
+ * and put back once the content is actually tall enough to hold it.
  */
-function ScrollToTop() {
+function ScrollMemory() {
   const { pathname } = useLocation()
   const navigationType = useNavigationType()
+  const current = useRef(pathname)
+
+  // Ours to do, now that we do it across reloads too. Left on 'auto' the
+  // browser would also try, and lose, and the two would fight on a pop.
+  useEffect(() => {
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual'
+  }, [])
+
+  /*
+   * Which screen a scroll event belongs to, updated before the browser paints.
+   *
+   * It matters on the way to a shorter screen: the document shrinks, the
+   * browser clamps the scroll position and fires an event for it. That event
+   * describes the screen being arrived at, not the one being left, and
+   * recording it against the wrong one would file a 0 over the position the
+   * user actually left behind.
+   */
+  useLayoutEffect(() => {
+    current.current = pathname
+  }, [pathname])
+
+  // Recorded as it happens rather than on the way out: a reload gives no
+  // warning, and `pagehide` is not dependable on iOS.
+  useEffect(() => {
+    let frame = 0
+    const record = () => {
+      if (frame) return
+      frame = requestAnimationFrame(() => {
+        frame = 0
+        rememberScroll(current.current, window.scrollY)
+      })
+    }
+    window.addEventListener('scroll', record, { passive: true })
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('scroll', record)
+    }
+  }, [])
 
   useEffect(() => {
-    if (navigationType === 'POP') return
-    window.scrollTo({ top: 0, behavior: 'auto' })
+    const saved = recalledScroll(pathname)
+    // A fresh push starts at the top; a pop or a reload goes back to its place.
+    const target = navigationType === 'POP' || saved !== undefined ? (saved ?? 0) : 0
+    if (target === 0) {
+      window.scrollTo(0, 0)
+      return
+    }
+
+    /*
+     * The page is not tall enough to scroll yet — routes arrive lazily and
+     * lists render after hydration. Keep asking for a few frames rather than
+     * scrolling once into a document that is still one screen tall.
+     */
+    let cancelled = false
+    let tries = 0
+    const attempt = () => {
+      if (cancelled) return
+      const reachable = document.documentElement.scrollHeight - window.innerHeight
+      if (reachable >= target) {
+        window.scrollTo(0, target)
+        return
+      }
+      if (tries++ < 60) requestAnimationFrame(attempt)
+      else window.scrollTo(0, Math.max(0, reachable))
+    }
+    attempt()
+    return () => {
+      cancelled = true
+    }
   }, [pathname, navigationType])
 
   return null
+}
+
+const SCROLL_KEY = 'sumptus.scroll.session'
+
+function readScroll(): Record<string, number> {
+  try {
+    return JSON.parse(sessionStorage.getItem(SCROLL_KEY) ?? '{}') as Record<string, number>
+  } catch {
+    return {}
+  }
+}
+
+function rememberScroll(pathname: string, y: number) {
+  try {
+    sessionStorage.setItem(SCROLL_KEY, JSON.stringify({ ...readScroll(), [pathname]: y }))
+  } catch {
+    /* Losing a scroll position is not worth throwing over. */
+  }
+}
+
+function recalledScroll(pathname: string): number | undefined {
+  return readScroll()[pathname]
 }
