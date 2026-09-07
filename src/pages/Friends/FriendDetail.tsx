@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { Trash2 } from 'lucide-react'
-import type { Debt } from '@/types'
+import type { Debt, Group } from '@/types'
 import { useAppStore } from '@/store/appStore'
 import { allocateAcrossGroups, useFriendLedger } from '@/hooks/useLedger'
 import { usePeople } from '@/hooks/usePeople'
@@ -32,6 +32,14 @@ export default function FriendDetail() {
   const people = usePeople()
   const ledger = useFriendLedger(id)
 
+  const sharedGroups = useMemo(
+    () =>
+      ledger.sharedGroupIds
+        .map((groupId) => groups.find((group) => group.id === groupId))
+        .filter((group): group is Group => group !== undefined && !group.pairWith),
+    [ledger.sharedGroupIds, groups],
+  )
+
   const [settling, setSettling] = useState<Debt | null>(null)
   const [confirmRemove, setConfirmRemove] = useState(false)
 
@@ -54,7 +62,7 @@ export default function FriendDetail() {
       <PageHeader
         title={friend.name}
         backTo="/friends"
-        eyebrow={`@${friend.handle}`}
+        eyebrow={friend.handle ? `@${friend.handle}` : undefined}
         action={
           <button
             onClick={() => setConfirmRemove(true)}
@@ -82,9 +90,11 @@ export default function FriendDetail() {
           </div>
         </div>
 
+        {/* "0 groups" is not information — splitting one to one is the normal
+            case now, and a zero there only reads as something missing. */}
         <p className="mt-5 text-sm text-muted">
-          {pluralize(ledger.sharedExpenses.length, 'shared expense')} ·{' '}
-          {pluralize(ledger.sharedGroupIds.length, 'group')}
+          {pluralize(ledger.sharedExpenses.length, 'shared expense')}
+          {sharedGroups.length > 0 && ` · ${pluralize(sharedGroups.length, 'group')}`}
         </p>
 
         {!settled && (
@@ -100,13 +110,12 @@ export default function FriendDetail() {
         )}
       </section>
 
-      {ledger.sharedGroupIds.length > 0 && (
+      {/* The pair ledger is not a group you are both in — it is this page. */}
+      {sharedGroups.length > 0 && (
         <section className="mt-9">
           <SectionHeader title="Shared groups" />
           <div className="flex flex-wrap gap-2">
-            {ledger.sharedGroupIds.map((groupId) => {
-              const group = groups.find((g) => g.id === groupId)
-              if (!group) return null
+            {sharedGroups.map((group) => {
               return (
                 <Link
                   key={group.id}

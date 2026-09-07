@@ -64,6 +64,8 @@ export default function GroupDetail() {
   )
 
   if (!group) return <Navigate to="/groups" replace />
+  // A pair ledger has no group screen; the relationship is the friend's page.
+  if (group.pairWith) return <Navigate to={`/friends/${group.pairWith}`} replace />
 
   const currency = group.currency
 

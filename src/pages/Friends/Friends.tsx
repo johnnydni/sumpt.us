@@ -44,7 +44,7 @@ export default function Friends() {
     <div>
       <PageHeader
         title="Friends"
-        backTo="/profile"
+        backTo="/overview"
         action={
           <Button size="sm" onClick={() => setAddOpen(true)}>
             <Plus size={15} strokeWidth={2} />

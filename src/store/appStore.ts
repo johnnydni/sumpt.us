@@ -66,6 +66,8 @@ interface AppState extends PersistedState {
     startsOn?: string
     endsOn?: string
   }) => Group
+  /** The private ledger with one person, made on first use. */
+  ensurePairGroup: (personId: string) => Group
   updateGroup: (id: string, patch: Partial<Omit<Group, 'id'>>) => void
   deleteGroup: (id: string) => void
 
@@ -203,6 +205,30 @@ export const useAppStore = create<AppState>()((set, get) => {
         // Kept together: half a range is worse than none, because every
         // consumer would then have to invent the missing end.
         ...(startsOn && endsOn ? { startsOn, endsOn } : {}),
+        createdAt: now,
+      }
+      commit({ groups: [...get().groups, group] })
+      void adapter.insertGroup(group)
+      return group
+    },
+
+    ensurePairGroup(personId) {
+      const existing = get().groups.find((group) => group.pairWith === personId)
+      if (existing) return existing
+
+      const now = new Date().toISOString()
+      const me = get().user?.id
+      const friend = get().friends.find((f) => f.id === personId)
+      const group: Group = {
+        id: createId('g'),
+        // Named after the person so it reads sensibly anywhere it surfaces —
+        // an expense's detail screen, an export — even though no list shows it.
+        name: friend?.name ?? 'Shared',
+        icon: 'custom',
+        currency: get().preferences.currency,
+        createdBy: me,
+        pairWith: personId,
+        members: [...(me ? [me] : []), personId].map((id) => ({ personId: id, joinedAt: now })),
         createdAt: now,
       }
       commit({ groups: [...get().groups, group] })

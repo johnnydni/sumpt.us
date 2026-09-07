@@ -43,8 +43,13 @@ export default function AddExpense() {
 
   const editing = editingId ? expenses.find((e) => e.id === editingId) : undefined
 
+  const friends = useAppStore((s) => s.friends)
+  const ensurePairGroup = useAppStore((s) => s.ensurePairGroup)
+  /** Everything except the private one-to-one ledgers, which name no group. */
+  const namedGroups = useMemo(() => groups.filter((group) => !group.pairWith), [groups])
+
   const [groupId, setGroupId] = useState<string>(
-    () => editing?.groupId ?? params.get('group') ?? groups[0]?.id ?? '',
+    () => editing?.groupId ?? params.get('group') ?? namedGroups[0]?.id ?? '',
   )
   const [amount, setAmount] = useState(() =>
     editing ? minorToInput(editing.amountMinor, editing.currency) : '',
@@ -107,18 +112,22 @@ export default function AddExpense() {
   const myShare = previewShares.find((s) => s.personId === people.me)?.shareMinor ?? 0
   const perPerson = selected.length > 0 ? Math.round(amountMinor / selected.length) : 0
 
-  if (groups.length === 0) {
+  // A friend is enough now — an expense no longer needs a group to live in.
+  if (namedGroups.length === 0 && friends.length === 0) {
     return (
       <div>
         <PageHeader title="Add expense" backTo="/overview" />
         <div className="paper px-6 py-12 text-center">
-          <p className="display text-xl">No group to spend in.</p>
+          <p className="display text-xl">Nobody to split with yet.</p>
           <p className="mx-auto mt-2 max-w-[32ch] text-sm leading-relaxed text-muted">
-            Expenses live inside a group. Create one first — it takes a few seconds.
+            Add a friend to split with one person, or start a group for a trip.
           </p>
-          <Button className="mt-6" onClick={() => navigate('/groups/new')}>
-            Create group
-          </Button>
+          <div className="mt-6 flex justify-center gap-2">
+            <Button onClick={() => navigate('/friends')}>Add a friend</Button>
+            <Button variant="outline" onClick={() => navigate('/groups/new')}>
+              New group
+            </Button>
+          </div>
         </div>
       </div>
     )
@@ -160,7 +169,11 @@ export default function AddExpense() {
     } else {
       addExpense(payload)
       toast.confirm('Expense added')
-      navigate(`/groups/${groupId}`, { replace: true })
+      // You split with a person, so you land on that person — not on a group
+      // screen for a ledger that is deliberately never listed as one.
+      navigate(group?.pairWith ? `/friends/${group.pairWith}` : `/groups/${groupId}`, {
+        replace: true,
+      })
     }
   }
 
@@ -248,8 +261,8 @@ export default function AddExpense() {
 
       <motion.div {...stagger(3)} className="mt-6 grid gap-2 sm:grid-cols-2">
         <SelectorButton
-          label="Group"
-          value={group?.name ?? 'Pick a group'}
+          label="Split with"
+          value={group?.name ?? 'Pick a group or a person'}
           onClick={() => setGroupOpen(true)}
           icon={group && <GroupIcon icon={group.icon} emoji={group.emoji} size={16} />}
         />
@@ -365,25 +378,69 @@ export default function AddExpense() {
         />
       </Sheet>
 
-      <Sheet open={groupOpen} onOpenChange={setGroupOpen} title="Group">
-        <div className="divide-y divide-line pb-4">
-          {groups.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => {
-                setGroupId(option.id)
-                setSplit({ method: 'equal', weights: {} })
-                setGroupOpen(false)
-              }}
-              className="flex w-full items-center gap-3 py-3.5 text-left transition-colors hover:bg-surface/60"
-            >
-              <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface text-navy">
-                <GroupIcon icon={option.icon} emoji={option.emoji} size={17} />
-              </span>
-              <span className="min-w-0 flex-1 truncate text-[15px]">{option.name}</span>
-              {option.id === groupId && <Check size={16} strokeWidth={2.5} className="text-navy" />}
-            </button>
-          ))}
+      {/*
+        One picker, two kinds of answer. Splitting with a single person is the
+        same act as splitting with a group — it only differs in who is in it —
+        so it belongs in the same list rather than behind a mode switch.
+      */}
+      <Sheet open={groupOpen} onOpenChange={setGroupOpen} title="Split with">
+        <div className="pb-4">
+          {namedGroups.length > 0 && (
+            <>
+              <p className="eyebrow pb-1 pt-2">Groups</p>
+              <div className="divide-y divide-line">
+                {namedGroups.map((option) => (
+                  <button
+                    key={option.id}
+                    onClick={() => {
+                      setGroupId(option.id)
+                      setSplit({ method: 'equal', weights: {} })
+                      setGroupOpen(false)
+                    }}
+                    className="flex w-full items-center gap-3 py-3.5 text-left transition-colors hover:bg-surface/60"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-sm bg-surface text-navy">
+                      <GroupIcon icon={option.icon} emoji={option.emoji} size={17} />
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-[15px]">{option.name}</span>
+                    {option.id === groupId && (
+                      <Check size={16} strokeWidth={2.5} className="text-navy" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
+
+          {friends.length > 0 && (
+            <>
+              <p className="eyebrow pb-1 pt-5">Just one person</p>
+              <div className="divide-y divide-line">
+                {friends.map((friend) => {
+                  const pair = groups.find((g) => g.pairWith === friend.id)
+                  return (
+                    <button
+                      key={friend.id}
+                      onClick={() => {
+                        // Made on first use, so picking a name nobody has split
+                        // with yet does not need a separate setup step.
+                        setGroupId(ensurePairGroup(friend.id).id)
+                        setSplit({ method: 'equal', weights: {} })
+                        setGroupOpen(false)
+                      }}
+                      className="flex w-full items-center gap-3 py-3.5 text-left transition-colors hover:bg-surface/60"
+                    >
+                      <Avatar name={friend.name} src={friend.avatarUrl} size="sm" />
+                      <span className="min-w-0 flex-1 truncate text-[15px]">{friend.name}</span>
+                      {pair?.id === groupId && (
+                        <Check size={16} strokeWidth={2.5} className="text-navy" />
+                      )}
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )}
         </div>
       </Sheet>
 

@@ -85,6 +85,18 @@ export interface Group {
    */
   createdBy?: string
   /**
+   * Set when this is the private ledger between you and one other person,
+   * holding their id.
+   *
+   * Splitting with one friend needs somewhere for the expense to live, and the
+   * whole money layer is built on groups — balances, settlements, the debt
+   * graph. Rather than teach all of it about expenses with no group, a pair
+   * gets a group of two that is never shown as one: it is not listed, it is
+   * not named by anyone, and it costs no ticket. The arithmetic stays in one
+   * place, which is the part that must not be duplicated.
+   */
+  pairWith?: string
+  /**
    * How long the trip runs, as plain days rather than timestamps — a trip is
    * measured in dates on a calendar, not in moments. Both or neither: a start
    * without an end is not a length. Absent on groups made before this existed,

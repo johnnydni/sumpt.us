@@ -20,6 +20,8 @@ export default function Groups() {
   const summaries = useMemo(() => {
     const needle = query.trim().toLowerCase()
     return groups
+      // Pair ledgers are not groups anyone named; they belong under Friends.
+      .filter((group) => !group.pairWith)
       .filter((group) => !needle || group.name.toLowerCase().includes(needle))
       .map((group) => {
         const groupExpenses = expenses.filter((e) => e.groupId === group.id)
