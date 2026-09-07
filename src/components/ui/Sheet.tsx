@@ -98,7 +98,18 @@ export function ConfirmDialog({
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-ink/20 backdrop-blur-[2px] data-[state=open]:animate-fade-in" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-50 w-[calc(100vw-2.5rem)] max-w-[380px] -translate-x-1/2 -translate-y-1/2 rounded-md border border-line bg-canvas p-5 shadow-lift data-[state=open]:animate-fade-up">
+        {/*
+          Centred by the wrapper, not by a transform on the dialog itself.
+          `fade-up` ends on `transform: none` and holds it, so a
+          `-translate-x-1/2` on the same element is wiped the moment the
+          animation lands — leaving the box's top-left corner at the middle of
+          the screen and most of it off the bottom right.
+
+          The wrapper takes no pointer events so a tap outside still reaches
+          the overlay and closes the dialog.
+        */}
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center p-5">
+          <Dialog.Content className="pointer-events-auto w-full max-w-[380px] rounded-md border border-line bg-canvas p-5 shadow-lift data-[state=open]:animate-fade-up">
           <Dialog.Title className="text-[17px] font-semibold tracking-tight">{title}</Dialog.Title>
           <Dialog.Description className="mt-2 text-sm leading-relaxed text-muted">
             {body}
@@ -122,7 +133,8 @@ export function ConfirmDialog({
               {confirmLabel}
             </button>
           </div>
-        </Dialog.Content>
+          </Dialog.Content>
+        </div>
       </Dialog.Portal>
     </Dialog.Root>
   )

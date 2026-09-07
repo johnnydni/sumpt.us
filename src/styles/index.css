@@ -19,6 +19,21 @@
     overscroll-behavior-y: none;
   }
 
+  /*
+   * Safari gives a date field an intrinsic width from the locale's format and
+   * will not shrink it below that — so `w-full` does not constrain it, the
+   * field runs past the right edge, and the whole page becomes wider than the
+   * screen. Stripping the native appearance lets it size like any other input.
+   * The centred text is Safari's too; the rest of the form is left aligned.
+   */
+  input[type='date'] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    width: 100%;
+    text-align: left;
+  }
+
   /* Financial figures must align in columns: tabular numerals everywhere. */
   .tnum {
     font-variant-numeric: tabular-nums;
