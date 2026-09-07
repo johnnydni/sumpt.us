@@ -62,6 +62,9 @@ interface AppState extends PersistedState {
     coverUrl?: string
     memberIds: string[]
     currency?: CurrencyCode
+    /** Both or neither — a start without an end is not a length. */
+    startsOn?: string
+    endsOn?: string
   }) => Group
   updateGroup: (id: string, patch: Partial<Omit<Group, 'id'>>) => void
   deleteGroup: (id: string) => void
@@ -184,7 +187,7 @@ export const useAppStore = create<AppState>()((set, get) => {
       void adapter.removeFriend(id)
     },
 
-    createGroup({ name, icon, emoji, coverUrl, memberIds, currency }) {
+    createGroup({ name, icon, emoji, coverUrl, memberIds, currency, startsOn, endsOn }) {
       const now = new Date().toISOString()
       const me = get().user?.id
       const uniqueMembers = [...new Set([...(me ? [me] : []), ...memberIds])]
@@ -196,6 +199,9 @@ export const useAppStore = create<AppState>()((set, get) => {
         coverUrl,
         currency: currency ?? get().preferences.currency,
         members: uniqueMembers.map((personId) => ({ personId, joinedAt: now })),
+        // Kept together: half a range is worse than none, because every
+        // consumer would then have to invent the missing end.
+        ...(startsOn && endsOn ? { startsOn, endsOn } : {}),
         createdAt: now,
       }
       commit({ groups: [...get().groups, group] })

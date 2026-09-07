@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { dateStack, groupByMonth, monthKey } from './index'
+import { dateStack, formatTripRange, groupByMonth, monthKey, tripLengthInDays } from './index'
 
 const at = (iso: string) => ({ id: iso, createdAt: iso })
 
@@ -46,5 +46,36 @@ describe('dateStack', () => {
 describe('monthKey', () => {
   it('sorts lexicographically in date order', () => {
     expect(monthKey('2026-01-31T00:00:00Z') < monthKey('2026-10-01T00:00:00Z')).toBe(true)
+  })
+})
+
+describe('tripLengthInDays', () => {
+  it('counts both ends, because a day trip is one day', () => {
+    expect(tripLengthInDays('2026-08-01', '2026-08-01')).toBe(1)
+    expect(tripLengthInDays('2026-08-01', '2026-08-02')).toBe(2)
+    expect(tripLengthInDays('2026-08-01', '2026-08-21')).toBe(21)
+  })
+
+  it('counts calendar days, not 24-hour blocks', () => {
+    // Across a daylight-saving change a "day" is 23 or 25 hours long, and
+    // dividing by 86400000 would quietly lose or gain one.
+    expect(tripLengthInDays('2026-03-28', '2026-03-30')).toBe(3)
+    expect(tripLengthInDays('2026-10-24', '2026-10-26')).toBe(3)
+  })
+
+  it('refuses a backwards range rather than reordering it', () => {
+    expect(tripLengthInDays('2026-08-10', '2026-08-01')).toBe(0)
+  })
+
+  it('spans a year end', () => {
+    expect(tripLengthInDays('2026-12-28', '2027-01-03')).toBe(7)
+  })
+})
+
+describe('formatTripRange', () => {
+  it('says each part once', () => {
+    expect(formatTripRange('2026-08-01', '2026-08-14')).toBe('1–14 Aug 2026')
+    expect(formatTripRange('2026-08-28', '2026-09-03')).toBe('28 Aug – 3 Sep 2026')
+    expect(formatTripRange('2026-12-28', '2027-01-03')).toBe('28 Dec 2026 – 3 Jan 2027')
   })
 })

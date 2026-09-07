@@ -1,4 +1,11 @@
-import { format, formatDistanceToNowStrict, isToday, isYesterday, parseISO } from 'date-fns'
+import {
+  differenceInCalendarDays,
+  format,
+  formatDistanceToNowStrict,
+  isToday,
+  isYesterday,
+  parseISO,
+} from 'date-fns'
 
 export function toDate(value: string | Date): Date {
   return typeof value === 'string' ? parseISO(value) : value
@@ -58,6 +65,29 @@ export function atSameTimeOfDay(day: string, existing?: string): string {
   const moved = new Date(clock)
   moved.setFullYear(year, month - 1, date)
   return moved.toISOString()
+}
+
+/**
+ * How many days a trip covers, counting both ends.
+ *
+ * Inclusive because that is what people mean: leaving and returning on the
+ * same day is a one-day trip, not a zero-day one. Returns 0 for a range that
+ * runs backwards, which the form refuses rather than silently reorders.
+ */
+export function tripLengthInDays(startsOn: string, endsOn: string): number {
+  const span = differenceInCalendarDays(toDate(endsOn), toDate(startsOn))
+  return span < 0 ? 0 : span + 1
+}
+
+/** "1–14 Aug" or "28 Dec 2026 – 3 Jan 2027", for a trip's dates on one line. */
+export function formatTripRange(startsOn: string, endsOn: string): string {
+  const from = toDate(startsOn)
+  const to = toDate(endsOn)
+  const sameYear = from.getFullYear() === to.getFullYear()
+  const sameMonth = sameYear && from.getMonth() === to.getMonth()
+  if (sameMonth) return `${format(from, 'd')}–${format(to, 'd MMM yyyy')}`
+  if (sameYear) return `${format(from, 'd MMM')} – ${format(to, 'd MMM yyyy')}`
+  return `${format(from, 'd MMM yyyy')} – ${format(to, 'd MMM yyyy')}`
 }
 
 /** "Aug" over "06" — the stacked date beside a row. */

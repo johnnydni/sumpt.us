@@ -8,13 +8,14 @@ import {
   calculateUserBalance,
   holdsTicket,
   settleBalances,
+  spentTickets,
   simplifyDebts,
   validateSplit,
 } from './index'
 import { parseAmountToMinor } from '@/lib/currency'
 import { createDemoState } from '@/data/mockData'
 import { allocateAcrossGroups } from '@/hooks/useLedger'
-import type { Debt, Expense, PersonBalance, Settlement } from '@/types'
+import type { Debt, Expense, Group, PersonBalance, Settlement } from '@/types'
 
 /**
  * These cover the only part of sumptus that can be wrong in a way the user
@@ -528,5 +529,34 @@ describe('holdsTicket', () => {
       createdAt: '2026-08-02T12:00:00.000Z',
     }
     expect(holdsTicket([spend('a', 1000), spend('b', 400)], [settlement], members)).toBe(true)
+  })
+})
+
+describe('spentTickets', () => {
+  const group = (id: string, archivedAt?: string): Group => ({
+    id,
+    name: id,
+    icon: 'travel',
+    currency: 'EUR',
+    members: [
+      { personId: 'a', joinedAt: '2026-01-01T00:00:00.000Z' },
+      { personId: 'b', joinedAt: '2026-01-01T00:00:00.000Z' },
+    ],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    ...(archivedAt ? { archivedAt } : {}),
+  })
+
+  it('counts a fresh group and an open one alike', () => {
+    expect(spentTickets([group('g1'), group('g2')], [], [])).toBe(2)
+  })
+
+  it('lets a closed group give its ticket back', () => {
+    // The escape hatch the plan promises: someone stops paying, the group is
+    // closed by hand, and the ticket is free again without deleting anything.
+    expect(spentTickets([group('g1'), group('g2', '2026-08-09T10:00:00.000Z')], [], [])).toBe(1)
+  })
+
+  it('counts nothing when there are no groups', () => {
+    expect(spentTickets([], [], [])).toBe(0)
   })
 })

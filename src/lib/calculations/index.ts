@@ -7,6 +7,7 @@ export {
   calculatePairwiseObligations,
   debtsForPerson,
   holdsTicket,
+  spentTickets,
 } from './balances'
 export { simplifyDebts, settleBalances, calculateSettlement } from './simplify'
 export type { SimplificationResult } from './simplify'

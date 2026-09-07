@@ -206,6 +206,14 @@ export const TRIP_TIERS: PriceTier[] = [
 ]
 
 /**
+ * The longest a trip may run, taken from the ladder rather than repeated.
+ *
+ * The two have to agree: a trip longer than the last rung could not be sold a
+ * pass at all. Deriving it means the cap moves when the ladder does.
+ */
+export const MAX_TRIP_DAYS = TRIP_TIERS[TRIP_TIERS.length - 1].upToDays
+
+/**
  * The rung a trip of this length falls on.
  *
  * Rounds up, never down: a trip is never sold a pass that runs out before it

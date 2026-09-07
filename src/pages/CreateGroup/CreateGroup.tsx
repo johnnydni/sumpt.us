@@ -1,8 +1,12 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { Check, Plus, UserPlus } from 'lucide-react'
 import type { GroupIconId } from '@/types'
 import { useAppStore } from '@/store/appStore'
+import { spentTickets } from '@/lib/calculations'
+import { FREE_GROUP_TICKETS, MAX_TRIP_DAYS, PLAN_CURRENCY, tripTierFor } from '@/data/plans'
+import { dayKey, tripLengthInDays } from '@/lib/dates'
+import { formatMoney } from '@/lib/formatting'
 import { usePeople } from '@/hooks/usePeople'
 import { PageHeader } from '@/components/navigation/PageHeader'
 import { Button } from '@/components/ui/Button'
@@ -33,7 +37,13 @@ export default function CreateGroup() {
   const friends = useAppStore((s) => s.friends)
   const people = usePeople()
 
+  const expenses = useAppStore((s) => s.expenses)
+  const settlements = useAppStore((s) => s.settlements)
+  const groups = useAppStore((s) => s.groups)
+
   const [name, setName] = useState('')
+  const [startsOn, setStartsOn] = useState(() => dayKey(new Date()))
+  const [endsOn, setEndsOn] = useState(() => dayKey(new Date()))
   const [icon, setIcon] = useState<GroupIconId>('travel')
   const [coverUrl, setCoverUrl] = useState<string>()
   const [emoji, setEmoji] = useState(EMOJI_CHOICES[0])
@@ -41,6 +51,22 @@ export default function CreateGroup() {
   const [error, setError] = useState<string>()
   const [addOpen, setAddOpen] = useState(false)
   const [newFriendName, setNewFriendName] = useState('')
+
+  const days = tripLengthInDays(startsOn, endsOn)
+
+  /*
+   * A ticket is spent per open group, so the question is how many are still
+   * held — not how many groups exist. Settling one, or closing it by hand,
+   * gives its ticket back and this drops again.
+   */
+  const ticketsInUse = useMemo(
+    () => spentTickets(groups, expenses, settlements),
+    [groups, expenses, settlements],
+  )
+  const noTicketLeft = ticketsInUse >= FREE_GROUP_TICKETS
+  // The length is what prices the pass, so the figure is only real once the
+  // dates make sense.
+  const passTier = days > 0 ? tripTierFor(days) : undefined
 
   const toggleMember = (id: string) =>
     setMemberIds((current) =>
@@ -53,12 +79,24 @@ export default function CreateGroup() {
       setError('Give the group a name.')
       return
     }
+    if (days === 0) {
+      setError('The end cannot come before the start.')
+      return
+    }
+    if (days > MAX_TRIP_DAYS) {
+      setError(`A trip runs up to ${MAX_TRIP_DAYS} days. This one is ${days}.`)
+      return
+    }
+    if (noTicketLeft) return
+
     const group = createGroup({
       name,
       icon,
       emoji: icon === 'custom' ? emoji : undefined,
       coverUrl,
       memberIds,
+      startsOn,
+      endsOn,
     })
     toast.confirm('Group created')
     navigate(`/groups/${group.id}`, { replace: true })
@@ -93,6 +131,82 @@ export default function CreateGroup() {
             />
           )}
         </Field>
+
+        {/*
+          Asked for up front rather than buried in settings: the length is what
+          decides whether this group fits in the free plan, so it cannot be an
+          afterthought at the point of creation.
+        */}
+        <div>
+          <p className="eyebrow mb-2">How long does it run?</p>
+          <div className="grid grid-cols-2 gap-2">
+            <Field label="From">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={startsOn}
+                  onChange={(event) => {
+                    const next = event.target.value || startsOn
+                    setStartsOn(next)
+                    // Dragging the start past the end would otherwise leave an
+                    // impossible range on screen for the user to notice.
+                    if (next > endsOn) setEndsOn(next)
+                    if (error) setError(undefined)
+                  }}
+                />
+              )}
+            </Field>
+            <Field label="To">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={endsOn}
+                  min={startsOn}
+                  onChange={(event) => {
+                    setEndsOn(event.target.value || endsOn)
+                    if (error) setError(undefined)
+                  }}
+                />
+              )}
+            </Field>
+          </div>
+          <p className="mt-2 text-[13px] text-muted">
+            {days === 0
+              ? 'The end cannot come before the start.'
+              : days > MAX_TRIP_DAYS
+                ? `${days} days — longer than a trip can run (${MAX_TRIP_DAYS}).`
+                : `${days} ${days === 1 ? 'day' : 'days'}.`}
+          </p>
+        </div>
+
+        {noTicketLeft && (
+          <section className="rounded-md border border-line bg-surface px-4 py-4">
+            <p className="text-[15px] font-medium">
+              Both group tickets are in use.
+            </p>
+            <p className="mt-1.5 text-sm leading-relaxed text-muted">
+              Free keeps {FREE_GROUP_TICKETS} groups running at a time. Settle one — or
+              close it by hand if someone has stopped paying — and its ticket comes back.
+            </p>
+            {passTier && (
+              <p className="mt-3 text-sm leading-relaxed text-muted">
+                A Trip Pass covers this one on its own:{' '}
+                <span className="tnum text-ink">
+                  {formatMoney(passTier.priceMinor, PLAN_CURRENCY)}
+                </span>{' '}
+                for {passTier.label.toLowerCase()}.
+              </p>
+            )}
+            <Link
+              to="/plan"
+              className="mt-3 inline-flex text-sm font-medium text-navy transition-opacity hover:opacity-70"
+            >
+              See the plans
+            </Link>
+          </section>
+        )}
 
         <CoverPicker value={coverUrl} onChange={setCoverUrl} />
 
@@ -226,7 +340,15 @@ export default function CreateGroup() {
               })}
             </span>
           )}
-          <Button type="submit" size="lg" className="ml-auto min-w-[160px]">
+          {/* Disabled rather than allowed-then-refused: the panel above already
+              says why, and a button that accepts a tap and does nothing is
+              worse than one that plainly cannot be pressed. */}
+          <Button
+            type="submit"
+            size="lg"
+            disabled={noTicketLeft}
+            className="ml-auto min-w-[160px]"
+          >
             Create group
           </Button>
         </div>

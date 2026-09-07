@@ -1,7 +1,17 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
-import { BarChart3, ImagePlus, MoreHorizontal, Plus, Share2, Trash2, UserPlus } from 'lucide-react'
+import {
+  Archive,
+  ArchiveRestore,
+  BarChart3,
+  ImagePlus,
+  MoreHorizontal,
+  Plus,
+  Share2,
+  Trash2,
+  UserPlus,
+} from 'lucide-react'
 import type { Debt } from '@/types'
 import { useAppStore } from '@/store/appStore'
 import { usePeople } from '@/hooks/usePeople'
@@ -9,13 +19,13 @@ import { useGroup, useGroupLedger } from '@/hooks/useLedger'
 import { PageHeader } from '@/components/navigation/PageHeader'
 import { BalanceRow } from '@/components/balance/BalanceRow'
 import { ExpenseRow } from '@/components/expenses/ExpenseRow'
-import { groupByMonth } from '@/lib/dates'
+import { formatTripRange, groupByMonth, tripLengthInDays } from '@/lib/dates'
 import { AnimatedMoney } from '@/components/balance/AnimatedMoney'
 import { DebtRow } from '@/components/settlements/DebtRow'
 import { SettleSheet } from '@/components/settlements/SettleSheet'
 import { Button } from '@/components/ui/Button'
 import { ConfirmDialog, Sheet } from '@/components/ui/Sheet'
-import { EmptyState, List, SectionHeader } from '@/components/ui/Primitives'
+import { Badge, EmptyState, List, SectionHeader } from '@/components/ui/Primitives'
 import { CoverPicker } from '@/components/groups/CoverPicker'
 import { useToast } from '@/components/ui/toastContext'
 import { pluralize } from '@/lib/formatting'
@@ -140,6 +150,20 @@ export default function GroupDetail() {
           {pluralize(ledger.memberIds.length, 'person', 'people')} ·{' '}
           {pluralize(ledger.expenses.length, 'expense')}
         </p>
+
+        {group.archivedAt && (
+          <p className="mt-3">
+            <Badge tone="plain">Closed · ticket returned</Badge>
+          </p>
+        )}
+
+        {/* Groups made before trips had a length, and households, have none. */}
+        {group.startsOn && group.endsOn && (
+          <p className="mt-1 text-sm text-muted">
+            {formatTripRange(group.startsOn, group.endsOn)} ·{' '}
+            {pluralize(tripLengthInDays(group.startsOn, group.endsOn), 'day')}
+          </p>
+        )}
 
         {/*
           Two rows on purpose. The three labelled buttons want 335px and the
@@ -324,6 +348,30 @@ export default function GroupDetail() {
             <BarChart3 size={17} strokeWidth={1.75} className="text-muted" />
             Statistics
           </Link>
+          {/*
+            The way out of the ticket rule, and the reason it is safe to
+            enforce at all: someone always stops answering about their eleven
+            euros, and without this the group they left open would hold a
+            ticket forever. Closing keeps everything readable — it only stops
+            the group counting against the plan.
+          */}
+          <button
+            onClick={() => {
+              setMenuOpen(false)
+              updateGroup(group.id, {
+                archivedAt: group.archivedAt ? undefined : new Date().toISOString(),
+              })
+              toast.confirm(group.archivedAt ? 'Group reopened' : 'Group closed — ticket back')
+            }}
+            className="flex w-full items-center gap-3 py-4 text-left text-[15px] transition-colors hover:bg-surface/60"
+          >
+            {group.archivedAt ? (
+              <ArchiveRestore size={17} strokeWidth={1.75} className="text-muted" />
+            ) : (
+              <Archive size={17} strokeWidth={1.75} className="text-muted" />
+            )}
+            {group.archivedAt ? 'Reopen group' : 'Close group'}
+          </button>
           <button
             onClick={() => {
               setMenuOpen(false)

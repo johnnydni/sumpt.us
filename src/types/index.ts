@@ -75,6 +75,14 @@ export interface Group {
   coverUrl?: string
   currency: CurrencyCode
   members: GroupMember[]
+  /**
+   * How long the trip runs, as plain days rather than timestamps — a trip is
+   * measured in dates on a calendar, not in moments. Both or neither: a start
+   * without an end is not a length. Absent on groups made before this existed,
+   * and on a household, which has no end.
+   */
+  startsOn?: string
+  endsOn?: string
   createdAt: string
   archivedAt?: string
 }
