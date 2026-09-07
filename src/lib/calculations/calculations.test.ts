@@ -533,7 +533,10 @@ describe('holdsTicket', () => {
 })
 
 describe('spentTickets', () => {
-  const group = (id: string, archivedAt?: string): Group => ({
+  const group = (
+    id: string,
+    extra: { archivedAt?: string; createdBy?: string } = {},
+  ): Group => ({
     id,
     name: id,
     icon: 'travel',
@@ -543,20 +546,37 @@ describe('spentTickets', () => {
       { personId: 'b', joinedAt: '2026-01-01T00:00:00.000Z' },
     ],
     createdAt: '2026-01-01T00:00:00.000Z',
-    ...(archivedAt ? { archivedAt } : {}),
+    ...extra,
   })
 
   it('counts a fresh group and an open one alike', () => {
-    expect(spentTickets([group('g1'), group('g2')], [], [])).toBe(2)
+    expect(spentTickets([group('g1'), group('g2')], [], [], 'a')).toBe(2)
   })
 
   it('lets a closed group give its ticket back', () => {
     // The escape hatch the plan promises: someone stops paying, the group is
     // closed by hand, and the ticket is free again without deleting anything.
-    expect(spentTickets([group('g1'), group('g2', '2026-08-09T10:00:00.000Z')], [], [])).toBe(1)
+    expect(
+      spentTickets([group('g1'), group('g2', { archivedAt: '2026-08-09T10:00:00.000Z' })], [], [], 'a'),
+    ).toBe(1)
+  })
+
+  it('does not charge a ticket for a group someone else started', () => {
+    // The whole of model B. Without this, buying Pro and inviting three
+    // friends turns all three away because of their own plans, and the person
+    // who paid has the worst experience in the product.
+    const mine = group('g1', { createdBy: 'a' })
+    const theirs = group('g2', { createdBy: 'b' })
+    expect(spentTickets([mine, theirs], [], [], 'a')).toBe(1)
+    expect(spentTickets([mine, theirs], [], [], 'b')).toBe(1)
+  })
+
+  it('treats a group with no author as your own', () => {
+    // Made before anything could be shared, so it cannot be anyone else's.
+    expect(spentTickets([group('g1')], [], [], 'a')).toBe(1)
   })
 
   it('counts nothing when there are no groups', () => {
-    expect(spentTickets([], [], [])).toBe(0)
+    expect(spentTickets([], [], [], 'a')).toBe(0)
   })
 })

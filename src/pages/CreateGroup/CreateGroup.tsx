@@ -60,8 +60,8 @@ export default function CreateGroup() {
    * gives its ticket back and this drops again.
    */
   const ticketsInUse = useMemo(
-    () => spentTickets(groups, expenses, settlements),
-    [groups, expenses, settlements],
+    () => spentTickets(groups, expenses, settlements, people.me),
+    [groups, expenses, settlements, people.me],
   )
   const noTicketLeft = ticketsInUse >= FREE_GROUP_TICKETS
   // The length is what prices the pass, so the figure is only real once the
@@ -184,11 +184,12 @@ export default function CreateGroup() {
         {noTicketLeft && (
           <section className="rounded-md border border-line bg-surface px-4 py-4">
             <p className="text-[15px] font-medium">
-              Both group tickets are in use.
+              Both of your group tickets are in use.
             </p>
             <p className="mt-1.5 text-sm leading-relaxed text-muted">
-              Free keeps {FREE_GROUP_TICKETS} groups running at a time. Settle one — or
+              Free runs {FREE_GROUP_TICKETS} groups of your own at a time. Settle one — or
               close it by hand if someone has stopped paying — and its ticket comes back.
+              Groups other people start never count against you.
             </p>
             {passTier && (
               <p className="mt-3 text-sm leading-relaxed text-muted">

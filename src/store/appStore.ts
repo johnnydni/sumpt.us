@@ -198,6 +198,7 @@ export const useAppStore = create<AppState>()((set, get) => {
         emoji,
         coverUrl,
         currency: currency ?? get().preferences.currency,
+        createdBy: me,
         members: uniqueMembers.map((personId) => ({ personId, joinedAt: now })),
         // Kept together: half a range is worse than none, because every
         // consumer would then have to invent the missing end.

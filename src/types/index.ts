@@ -76,6 +76,15 @@ export interface Group {
   currency: CurrencyCode
   members: GroupMember[]
   /**
+   * Who started it. A ticket is spent by creating a group, never by joining
+   * one, so this is what the free limit counts — matching `groups.created_by`,
+   * which the schema has carried from the beginning.
+   *
+   * Absent on groups made before this existed. Those are treated as your own,
+   * which they are: nothing could be shared yet.
+   */
+  createdBy?: string
+  /**
    * How long the trip runs, as plain days rather than timestamps — a trip is
    * measured in dates on a calendar, not in moments. Both or neither: a start
    * without an end is not a length. Absent on groups made before this existed,

@@ -46,8 +46,8 @@ export default function Groups() {
    * are allowed to have.
    */
   const ticketsInUse = useMemo(
-    () => spentTickets(groups, expenses, settlements),
-    [groups, expenses, settlements],
+    () => spentTickets(groups, expenses, settlements, people.me),
+    [groups, expenses, settlements, people.me],
   )
 
   return (
